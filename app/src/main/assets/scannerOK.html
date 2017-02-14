@@ -38,12 +38,12 @@
         <form name="form1" method="get" action="">
 		
             <div data-role="fieldcontain">
-                <label id="id_text">Vete a la posicion AAAAA  <br/> y escanea o escribe el codigo"</label>
+                <label id="id_text"></label>
             </div>
 			
-            <div data-role="ui-field-contain">
+            <!-- <div data-role="ui-field-contain">
                 <input type="button" value="Volver" id="id_btnVolver" onclick="volver()"/>
-            </div>
+            </div> -->
         </form>
     </div>
 </div>
@@ -51,7 +51,9 @@
 <script type="text/javascript">
 
 			function volver(){
-			    window.history.back()
+                if(history.previous){
+                    Android.finishWindow()
+                }
 			}	
 			
 			function getParameterByName(name) {

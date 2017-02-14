@@ -2,19 +2,15 @@ package com.mengroba.scanneroption;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
-import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -31,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int STATE_HOMEPAGE = 0;
     private static final int STATE_SCAN = 3;
-    private static final int STATE_VOICE = 5;
     private static final String WEB_HOME = "file:///android_asset/main_menu.html";
 
     public WebView webView;
@@ -44,14 +39,12 @@ public class MainActivity extends AppCompatActivity {
     private String scanFormatResut;
 
     private static final int BARCODE_RESULTCODE = 49374;
-    private String textVoice;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
-        //TTS: textToSpeech = new TextToSpeech( this, this );
         //creamos el visor HTML
         createWebView(this);
         //Cargamos el WebView segun las elecciones en el HTML
@@ -72,12 +65,6 @@ public class MainActivity extends AppCompatActivity {
                 scanner.setInfoBoxColor("#1c1c1c");
                 scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
                 break;
-            case STATE_VOICE:
-                //metodo para TTS
-                textVoice = getIntent().getStringExtra("MSG");
-                Toast.makeText(this, textVoice, Toast.LENGTH_SHORT).show();
-               /* textToSpeech.setLanguage( new Locale( "spa", "ESP" ) );
-                speak(textVoice);*/
             default:
                 webView.loadUrl(WEB_HOME);
                 break;
@@ -226,53 +213,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-    /**
-     * Metodo sobreescrito para iniciar el servicio TTS (Text to Speech)
-     */
-    /*@Override
-    public void onInit(int status) {
-        if ( status == TextToSpeech.LANG_MISSING_DATA | status == TextToSpeech.LANG_NOT_SUPPORTED )
-        {
-            Toast.makeText( this, "Error, en datos de lenguaje | Lenguaje no soportado", Toast.LENGTH_SHORT ).show();
-        }
-
-    }
-
-    private void speak(String str){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            newSpeak(str);
-        }else{
-            oldSpeak(str);
-        }
-    }
-    @SuppressWarnings("deprecation")
-    public void oldSpeak(String text){
-        HashMap<String, String> map = new HashMap<>();
-        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "MessageId");
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, map );
-        textToSpeech.setSpeechRate( 1.0f );
-        textToSpeech.setPitch( 1.0f );
-    }
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void newSpeak(String text){
-        String utteranceId=this.hashCode() + "";
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH,null,utteranceId);
-        textToSpeech.setSpeechRate( 1.0f );
-        textToSpeech.setPitch( 1.0f );
-    }
-
-    @Override
-    protected void onDestroy()
-    {
-        if ( textToSpeech != null )
-        {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-        }
-        super.onDestroy();
-    }*/
-
 
     /**
      * Sobreescribimos el metodo de boton vuelta atras para que vaya a la anterior pagina visitada

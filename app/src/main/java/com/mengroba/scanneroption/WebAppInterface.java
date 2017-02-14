@@ -1,9 +1,11 @@
 package com.mengroba.scanneroption;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.speech.tts.TextToSpeech;
 import android.view.KeyEvent;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
@@ -16,7 +18,7 @@ import android.widget.Toast;
  * Clase que hace de Interface entre Android y JavaScript, agrupando los metodos/funciones entre
  * ambas.
  */
-public class WebAppInterface {
+public class WebAppInterface implements TextToSpeech.OnInitListener {
 
     private Context context;
     private static final String URLGOOGLE =
@@ -27,8 +29,10 @@ public class WebAppInterface {
     private static final int STATE_MAP = 2;
     private static final int STATE_SCAN = 3;
     private static final int STATE_CAMERA = 4;
-    private static final int STATE_VOICE = 5;
     private Intent intent;
+    private TextToSpeech tts;
+    private String msg;
+    private Boolean ttsOk = true;
 
     /**
      * Constructor de la clase WebAppInterface
@@ -102,15 +106,11 @@ public class WebAppInterface {
      * Metodo para pasar a voz un mensaje de texto
      * @param msg
      */
-    /*@JavascriptInterface
+    @JavascriptInterface
     public void textSpeech(String msg) {
-        //Pasamos a MainActivity el estado correspondiente al escaner de barras
-        intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("STATE", STATE_VOICE);
-        intent.putExtra("MSG", msg);
-        context.startActivity(intent);
-    }*/
+        this.msg = msg;
+        tts = new TextToSpeech(context, this);
+    }
 
     /**
      * Creamos un Toast con el mensaje pasado por parametro en el HTML     *
@@ -146,18 +146,33 @@ public class WebAppInterface {
         context.startActivity(intent);
     }
 
-    /**
-     * Metodo que carga un mapa con las coordenadas indicadas por el usuario     *
-     * @param lat
-     * @param lon
-     */
     @JavascriptInterface
-    public void showMap(String lat, String lon) {
-        //Pasamos a MainActivity las coordenadas a buscar
-        intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("STATE", STATE_MAP);
-        intent.putExtra("COORD", URLMAP1 + lat + 0 + lon + 0 + URLMAP2 + lat + "," + lon);
-        context.startActivity(intent);
+    public void finishWindow(){
+        ((Activity)context).finish();
+    }
+
+    @Override
+    // OnInitListener method to receive the TTS engine status
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            ttsOk = true;
+            speak(msg, true);
+        }
+        else {
+            ttsOk = false;
+        }
+    }
+
+    // A method to speak something
+    @SuppressWarnings("deprecation") // Support older API levels too.
+    public void speak(String text, Boolean override) {
+        if (ttsOk) {
+            if (override) {
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+            }
+            else {
+                tts.speak(text, TextToSpeech.QUEUE_ADD, null);
+            }
+        }
     }
 }
