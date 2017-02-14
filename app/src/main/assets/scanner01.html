@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+    <link rel="stylesheet" href="jquery.mobile-1.3.2.min.css">
+    <script src="jquery-1.8.3.min.js"></script>
+    <script src="jquery.mobile-1.3.2.min.js"></script>
+    <style>
+	.info {
+		color: green;
+		font-size: 25px;
+	}
+	.error {
+		color: red;
+		font-size: 25px;
+	}
+	div#down {
+		position: fixed;
+		bottom: 0;
+		width:95%;
+	}
+	</style>
+	
+</head>
+<body onload="resetPage()">
+
+<audio id="id_beepError">
+    <source src="beepError.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+<audio id="id_beepOk">
+    <source src="beepOk.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+
+
+<div data-role="page" id="pagetwo">
+    <div data-role="header">
+        <h1>MENU ESCANER</h1>
+    </div>
+
+    <div data-role="content">
+        <form name="form1" method="get" action="">
+		
+            <div data-role="fieldcontain">
+                <input class="number" type="number" name="name_keytext" id="id_keytext" value=""
+                       placeholder="Escribe el valor o escánealo">
+                <!-- <input type="button" value="Cambiar teclado" id="id_btnKey" onclick="keySwitch()"/> -->
+                <input type="button" value="Escanear" id="id_button1" onclick="scanBarcode()"/>
+                <label id="id_text">Vete a la posicion AAAAA <br/> y escanea o escribe el valor"</label>
+            </div>
+			
+            <div data-role="ui-field-contain">
+                <input type="button" value="Aceptar" id="id_btnTest" onclick="aceptar()"/>
+                <input type="button" value="Cancelar" id="id_btnError" onclick="cancelar()"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+			function resetPage(){
+				if(document.getElementById("id_keytext").value != ""){
+					document.getElementById("id_keytext").value = ""
+				}
+			}
+
+			function aceptar(){
+				if(document.getElementById("id_keytext").value != ""){
+					codigo = document.getElementById("id_keytext").value;
+					window.open("scannerOK.html?valor="+codigo,"OK",
+					"location=no,menubar=no,titlebar=no,resizable=no,toolbar=no,menubar=no");					
+				}else{
+					document.getElementById("id_beepError").play(); 
+					showAndroidToast("Error al introducir el codigo");	
+					document.getElementById("id_keytext").value = "";					
+				}
+			}
+
+            function cancelar() {
+				if(document.getElementById("id_keytext").value != ""){
+				document.getElementById("id_beepError").play(); 
+				showAndroidToast("Error al introducir el codigo");	
+				document.getElementById("id_keytext").value = ""; 					
+				}else{
+					window.history.back();
+				}				
+            }
+
+            function keySwitch() {
+				if(document.querySelector(".text")){
+                    document.getElementById("id_keytext").classList.remove("text");
+                    document.getElementById("id_keytext").classList.add("number");
+                    document.getElementById("id_keytext").type = "number";
+                    document.getElementById("id_keytext").placeholder = "Teclado de numeros seleccionado";
+				}else if(document.querySelector(".number")){
+                    document.getElementById("id_keytext").classList.remove("number");
+                    document.getElementById("id_keytext").classList.add("text");
+                    document.getElementById("id_keytext").type = "text";
+                    document.getElementById("id_keytext").placeholder = "Teclado de letras seleccionado";
+				}else{
+                    document.getElementById("id_keytext").classList.remove("text");
+                    document.getElementById("id_keytext").classList.remove("number");
+                    document.getElementById("id_keytext").classList.add("text");
+                    document.getElementById("id_keytext").type = "text";
+                    document.getElementById("id_keytext").value = "Teclado de letras seleccionado";
+				}
+            }
+
+            function textSpeech(texto){
+                Android.textSpeech(texto)
+            }
+
+            function dialogScanCode(){
+              if(document.form1.name_keytext.value != ""){
+                  scan_code = document.form1.name_keytext.value
+              }else{
+                  scan_code = "Codigo no valido"
+              }
+              Android.showScanCode(scan_code)
+            }
+
+            function scanBarcode() {
+                Android.scanBarcode()
+            }
+
+            function scanBarcodeResult(codigo) {
+                alert("-- " + codigo + " -- ")
+                document.getElementById("id_scan").value = codigo
+            }
+
+            function scanResult(codigo) {
+                document.getElementById("title_scan").innerHTML = codigo
+                document.getElementById("title_scan").value = codigo
+                alert("-- " + codigo + " --")
+            }
+
+            function showAndroidDialog(message) {
+                Android.showDialog(message)
+            }
+
+            function showAndroidToast(message) {
+                Android.makeToastAndroid(message)
+            }
+
+            function autoFocusScan(){
+            if(!("autofocus" in document.createElement("input")))
+                document.getElementById("id_scan").focus();
+                Android.scanBarcode()
+            }
+
+            $.mobile.pushStateEnabled = false
+
+
+
+</script>
+
+</body>
+</html>

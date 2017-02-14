@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "C:\\projects\\ScannerOption\\zxing-orient\\build\\intermediates\\res\\merged\\release\\layout-land\\capture.xml",
+        "source": "C:\\projects\\ScannerOption\\zxing-orient\\src\\main\\res\\layout-land\\capture.xml"
+    },
+    {
+        "merged": "C:\\projects\\ScannerOption\\zxing-orient\\build\\intermediates\\res\\merged\\release\\layout-land\\encode.xml",
+        "source": "C:\\projects\\ScannerOption\\zxing-orient\\src\\main\\res\\layout-land\\encode.xml"
+    }
+]
