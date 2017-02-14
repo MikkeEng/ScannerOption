@@ -47,8 +47,8 @@
                        placeholder="Escribe el valor o escánealo">
                 <!-- <input type="button" value="Cambiar teclado" id="id_btnKey" onclick="keySwitch()"/> -->
                 <input type="button" value="Escanear" id="id_button1" onclick="scanBarcode()"/>
-                <input type="button" value="Lee" id="id_speech" onclick="androidSpeech()"/>
-                <label id="id_text">Vete a la posicion A y escanea o escribe el valor</label>
+                <!-- <input type="button" value="Lee" id="id_speech" onclick="androidSpeech()"/> -->
+                <label id="id_text">Vete a la posicion AA y escanea o escribe el valor</label>
             </div>
 			
             <div data-role="ui-field-contain">
@@ -65,6 +65,8 @@
 				if(document.getElementById("id_keytext").value != ""){
 					document.getElementById("id_keytext").value = ""
 				}
+				var speech = document.getElementById("id_text").innerHTML;
+				Android.textSpeech(speech);
 			}
 			
 			function htmlSpeech(){

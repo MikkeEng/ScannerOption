@@ -66,6 +66,8 @@
 			function codigoOK(){
 				var valor = getParameterByName('valor');
 				document.getElementById('id_text').innerHTML = "El valor es: " + valor; 
+				var speech = document.getElementById("id_text").innerHTML;
+				Android.textSpeech(speech);
 			}
 
             function textSpeech(texto){
