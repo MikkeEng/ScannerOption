@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.speech.tts.TextToSpeech;
 import android.view.KeyEvent;
 import android.webkit.JavascriptInterface;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 /**
@@ -159,6 +160,8 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
             speak(msg, true);
         }
         else {
+            tts.stop();
+            tts.shutdown();
             ttsOk = false;
         }
     }

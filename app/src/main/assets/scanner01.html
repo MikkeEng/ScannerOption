@@ -44,13 +44,10 @@
 		
             <div data-role="fieldcontain">
                 <input class="number" type="number" name="name_keytext" id="id_keytext" value=""
-                       placeholder="Escribe el valor o escánealo">
-                <!-- <input type="button" value="Cambiar teclado" id="id_btnKey" onclick="keySwitch()"/> -->
-                <input type="button" value="Escanear" id="id_button1" onclick="scanBarcode()"/>
-                <!-- <input type="button" value="Lee" id="id_speech" onclick="androidSpeech()"/> -->
+                       placeholder="Escanea o escribe el valor" autocomplete="off" onfocus="scanBarcode()">
                 <label id="id_text">Vete a la posicion AA y escanea o escribe el valor</label>
             </div>
-			
+
             <div data-role="ui-field-contain">
                 <input type="button" value="Aceptar" id="id_btnTest" onclick="aceptar()"/>
                 <input type="button" value="Cancelar" id="id_btnError" onclick="cancelar()"/>
@@ -62,19 +59,15 @@
 <script type="text/javascript">
 
 			function resetPage(){
-				if(document.getElementById("id_keytext").value != ""){
-					document.getElementById("id_keytext").value = ""
-				}
-				var speech = document.getElementById("id_text").innerHTML;
-				Android.textSpeech(speech);
+				document.getElementById("id_keytext").innerHTML = "";
 			}
-			
+
 			function htmlSpeech(){
 				var speech = document.getElementById("id_text").innerHTML;
 				var msg = new SpeechSynthesisUtterance('Esto es una prueba');
 				window.speechSynthesis.speak(msg);
 			}
-			
+
 			function androidSpeech(){
 				var speech = document.getElementById("id_text").innerHTML;
 				Android.textSpeech(speech);
@@ -83,23 +76,26 @@
 			function aceptar(){
 				if(document.getElementById("id_keytext").value != ""){
 					codigo = document.getElementById("id_keytext").value;
-					window.open("scannerOK.html?valor="+codigo,"OK",
-					"location=no,menubar=no,titlebar=no,resizable=no,toolbar=no,menubar=no");					
+					window.open("scannerOK2.html?value="+codigo,"OK",
+					"location=no,menubar=no,titlebar=no,resizable=no,toolbar=no,menubar=no");
 				}else{
-					document.getElementById("id_beepError").play(); 
-					showAndroidToast("Error al introducir el codigo");	
-					document.getElementById("id_keytext").value = "";					
+					document.getElementById("id_beepError").play();
+					document.getElementById("id_text").innerHTML = "Posición incorrecta. Vete a posicion AA";
+				    var speech = document.getElementById("id_text").innerHTML;
+				    Android.textSpeech(speech);
+					showAndroidToast("Error al introducir el codigo");
+					document.getElementById("id_keytext").value = "";
 				}
 			}
 
             function cancelar() {
 				if(document.getElementById("id_keytext").value != ""){
-				document.getElementById("id_beepError").play(); 
-				showAndroidToast("Error al introducir el codigo");	
-				document.getElementById("id_keytext").value = ""; 					
+				document.getElementById("id_beepError").play();
+				showAndroidToast("Error al introducir el codigo");
+				document.getElementById("id_keytext").value = "";
 				}else{
 					window.history.back();
-				}				
+				}
             }
 
             function keySwitch() {
@@ -126,6 +122,20 @@
                 Android.textSpeech(texto)
             }
 
+			function getParameterByName(name) {
+				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(location.search);
+				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+			}
+
+			function codigoOK(){
+				var valor = getParameterByName('valor');
+				document.getElementById('id_text').innerHTML = "El valor es: " + valor;
+				var speech = document.getElementById("id_text").innerHTML;
+				Android.textSpeech("El codigo es correcto");
+			}
+
             function dialogScanCode(){
               if(document.form1.name_keytext.value != ""){
                   scan_code = document.form1.name_keytext.value
@@ -136,6 +146,8 @@
             }
 
             function scanBarcode() {
+				var speech = document.getElementById("id_text").innerHTML;
+				Android.textSpeech(speech);
                 Android.scanBarcode()
             }
 

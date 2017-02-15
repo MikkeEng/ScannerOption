@@ -95,8 +95,8 @@ public class MainActivity extends AppCompatActivity {
         //habilitamos el uso de mediaplayer sin gestos
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
         //habilitamos las opciones de zoom
-        webView.getSettings().setSupportZoom(true);
-        webView.getSettings().setBuiltInZoomControls(true);
+        /*webView.getSettings().setSupportZoom(true);
+        webView.getSettings().setBuiltInZoomControls(true);*/
         //Si queremos habilitar plugins al WebView (no se recomienda por seguridad)
         //webView.getSettings().setPluginState(WebSettings.PluginState.OFF);
         //habilitamos el tratamiento de ficheros
@@ -180,7 +180,8 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "onActivityResult" + scanFormatResut);
             Log.i(TAG, "onActivityResult" + scanContentResut);
             if (scanResult.getContents() != null) {
-                webView.loadUrl("file:///android_asset/scannerOK.html?valor=" + scanContentResut);
+                //webView.loadUrl("https://www.google.es");
+                webView.loadUrl("file:///android_asset/scannerOK.html?value=" + scanContentResut);
                 //Podemos pasar la informacion al usuario, para ello usamos un dialogo emergente
                 /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder
@@ -206,6 +207,8 @@ public class MainActivity extends AppCompatActivity {
                 builder.create().show();*/
 
             } else {
+                scanContentResut = "errorScan";
+                webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResut);
                 Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
                 finish();
             }
@@ -222,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Comprobamos si hay historial de navegacion
         if (webView.canGoBack()) {
+            webView.goBack();
             webView.goBack();
         } else {
             // Si no lo hay, damos el control al Back de la Activity
