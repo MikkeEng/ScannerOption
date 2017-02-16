@@ -3,11 +3,12 @@ package com.mengroba.scanneroption;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
-import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
@@ -16,6 +17,11 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
@@ -35,10 +41,15 @@ public class MainActivity extends AppCompatActivity {
 
     private String url;
     private ZxingOrient scanner;
-    private String scanContentResut;
-    private String scanFormatResut;
+    private String scanContentResult;
+    private String scanFormatResult;
 
     private static final int BARCODE_RESULTCODE = 49374;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         //creamos el visor HTML
         createWebView(this);
+
         //Cargamos el WebView segun las elecciones en el HTML
         //Por defecto se cargaria siempre la pagina principal
         state = getIntent().getIntExtra("STATE", STATE_HOMEPAGE);
@@ -73,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
         // definimos el visor HTML
         startWebView();
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     /**
@@ -158,6 +173,13 @@ public class MainActivity extends AppCompatActivity {
             public void onConsoleMessage(String message, int lineNumber, String sourceID) {
                 Log.d(TAG, "Mostrando mensaje de consola: " + message);
             }
+
+            @Override
+            public void onCloseWindow(WebView window) {
+                super.onCloseWindow(window);
+                finish();
+                Log.d(TAG, "Cerrando ventana" + window);
+            }
         });   // Fin de setWebChromeClient
 
     } //Fin de startWebView
@@ -175,24 +197,24 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == BARCODE_RESULTCODE) {
             //Cargamos la libreria Zxing a traves de scanResult y parseamos el resultado
             ZxingOrientResult scanResult = ZxingOrient.parseActivityResult(requestCode, resultCode, intent);
-            scanFormatResut = scanResult.getFormatName();
-            scanContentResut = scanResult.getContents();
-            Log.i(TAG, "onActivityResult" + scanFormatResut);
-            Log.i(TAG, "onActivityResult" + scanContentResut);
+            scanFormatResult = scanResult.getFormatName();
+            scanContentResult = scanResult.getContents();
+            Log.i(TAG, "onActivityResult" + scanFormatResult);
+            Log.i(TAG, "onActivityResult" + scanContentResult);
             if (scanResult.getContents() != null) {
                 //webView.loadUrl("https://www.google.es");
-                webView.loadUrl("file:///android_asset/scannerOK.html?value=" + scanContentResut);
+                webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResult);
                 //Podemos pasar la informacion al usuario, para ello usamos un dialogo emergente
                 /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder
-                        .setMessage("El formato es: " + scanFormatResut + "\n" +
-                                "y el codigo es: " + scanContentResut)
+                        .setMessage("El formato es: " + scanFormatResult + "\n" +
+                                "y el codigo es: " + scanContentResult)
                         .setPositiveButton("Guardar codigo", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 Toast.makeText(MainActivity.this, "Guardando codigo", Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();
-                                webView.loadUrl("file:///android_asset/scannerOK.html?valor=" + scanContentResut);
+                                webView.loadUrl("file:///android_asset/scannerOK.html?valor=" + scanContentResult);
                             }
                         })
                         .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
@@ -207,14 +229,12 @@ public class MainActivity extends AppCompatActivity {
                 builder.create().show();*/
 
             } else {
-                scanContentResut = "errorScan";
-                webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResut);
+                scanContentResult = "errorScan";
+                webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResult);
                 Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
-
-
     }
 
     /**
@@ -226,10 +246,45 @@ public class MainActivity extends AppCompatActivity {
         //Comprobamos si hay historial de navegacion
         if (webView.canGoBack()) {
             webView.goBack();
-            webView.goBack();
         } else {
             // Si no lo hay, damos el control al Back de la Activity
             super.onBackPressed();
         }
+    }
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
+        client.disconnect();
     }
 }
