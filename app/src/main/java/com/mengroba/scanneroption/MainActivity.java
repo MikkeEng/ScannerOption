@@ -8,8 +8,11 @@ import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -22,6 +25,7 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.mengroba.scanneroption.utils.UtilsKeys;
 
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
@@ -43,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private ZxingOrient scanner;
     private String scanContentResult;
     private String scanFormatResult;
+    //Elementos HTML
+    private final String javascritpt = "javascript:(";
+    private final String jsFunction = "function() {";
 
     private static final int BARCODE_RESULTCODE = 49374;
     /**
@@ -61,13 +68,13 @@ public class MainActivity extends AppCompatActivity {
 
         //Cargamos el WebView segun las elecciones en el HTML
         //Por defecto se cargaria siempre la pagina principal
-        state = getIntent().getIntExtra("STATE", STATE_HOMEPAGE);
+        /*state = getIntent().getIntExtra("STATE", STATE_HOMEPAGE);
         switch (state) {
             case STATE_HOMEPAGE:
                 webView.loadUrl(WEB_HOME);
                 break;
-            /*Si se ha pulsado el boton de escanear codigo de barras, se hace uso de la
-            libreria zxing para lanzar el escaner*/
+            *//*Si se ha pulsado el boton de escanear codigo de barras, se hace uso de la
+            libreria zxing para lanzar el escaner*//*
             case STATE_SCAN:
                 //se edita el layout del scanner
                 scanner = new ZxingOrient(MainActivity.this);
@@ -80,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
             default:
                 webView.loadUrl(WEB_HOME);
                 break;
-        } //Fin del switch
+        */ //Fin del switch
 
         // definimos el visor HTML
         startWebView();
@@ -102,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         //Accedemos a la configuracion del WebView y habilitamos el javascript
         webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebContentsDebuggingEnabled(true);
         // Ajustamos el HTML al WebView
         webView.getSettings().setLoadWithOverviewMode(true);
         //añadimos scroll
@@ -116,7 +124,86 @@ public class MainActivity extends AppCompatActivity {
         //webView.getSettings().setPluginState(WebSettings.PluginState.OFF);
         //habilitamos el tratamiento de ficheros
         webView.getSettings().setAllowFileAccess(true);
-    }
+
+        webView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                /*if (v.hasFocus()) {
+                    v.requestFocus();
+                }*/
+
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+
+                    WebView.HitTestResult hr = ((WebView) v).getHitTestResult();
+                    Log.d(TAG, "HitTestResult:" + webView.getHitTestResult());
+                    Log.d(TAG, "getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
+
+                    if (hr.getType() == 9) {
+                        /*webView.loadUrl(javascritpt +
+                                jsFunction +
+                                    "var elementClass = document.getElementsByTagName('class');" +
+                                    "for(var i = 0; i < elementClass.length; i++) {" +
+                                        "console.log('num de class: ' + elementClass.length);" +
+                                        "if(scanClass.className.toLowerCase() == 'scanner') {" +
+                                            "var elementClass = document.getElementsByTagName('class');" +
+                                            "console.log('valor scanClass: ' + scanClass);" +
+                                            "Android.startScan();" +
+                                        "}" +
+                                    "}" +
+                                "})()"
+                        );*/
+                        /*webView.loadUrl(javascritpt +
+                                jsFunction +
+                                    "var elementClass = document.getElementsByTagName('class');" +
+                                    "for(var i = 0; i < elementClass.length; i++) {" +
+                                        "console.log('num de class: ' + elementClass.length);" +
+                                        "if(scanClass.className.toLowerCase() == 'scanner') {" +
+                                            "var elementClass = document.getElementsByTagName('class');" +
+                                            "console.log('valor scanClass: ' + scanClass);" +
+                                            "Android.startScan();" +
+                                        "}" +
+                                    "}" +
+                                "})()"
+                        );*/
+
+                        Log.d(TAG, "onTouch():findFocus" + v.findFocus());
+                        startScanMain();
+                    }
+                }
+                return false;
+            }
+        });
+
+        webView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Log.d(TAG, "onFocusChange(): " + v.getOnFocusChangeListener());
+
+                //TODO si el elemento tiene el class de html scanner entonces abrimos el scanner.
+                //Pero como sabemos que elemento es al que hay incluir la clase? Como lo detectamos?
+                if (hasFocus) {
+                    Toast.makeText(getApplicationContext(), "Has Focus", Toast.LENGTH_SHORT).show();
+                }
+                /*webView.loadUrl(javascritpt +
+                        jsFunction +
+                            "var inputs = document.getElementsByTagName('input');" +
+                            "for(var i = 0; i < inputs.length; i++) {" +
+                                "console.log('num de inputs: ' + inputs.length);" +
+                                "if(inputs[i].type.toLowerCase() == 'text') {" +
+                                    "console.log('valor de input: ' + inputs[i].value);" +
+                                    "alert(inputs[i].value);" +
+                                "}" +
+                            "}" +
+                        "})()"
+                );*/
+
+            }
+        });
+
+        webView.loadUrl(WEB_HOME);
+
+    } //Fin de createWebView()
 
     /**
      * Iniciamos un cliente de WebView que es llamado al abrir el HTML
@@ -180,9 +267,33 @@ public class MainActivity extends AppCompatActivity {
                 finish();
                 Log.d(TAG, "Cerrando ventana" + window);
             }
-        });   // Fin de setWebChromeClient
+        });   // Fin de setWebChromeClient()
 
-    } //Fin de startWebView
+    } //Fin de startWebView()
+
+    private void startScanMain() {
+        //Creamos el scanner
+        scanner = new ZxingOrient(MainActivity.this);
+        scanner.setToolbarColor("#1c1c1c");
+        scanner.setIcon(R.drawable.ic_barcode_scan);
+        scanner.setInfo("Pulsa ATRÁS para cancelar");
+        scanner.setInfoBoxColor("#1c1c1c");
+        scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
+    }
+
+    private void loadData(String msg) {
+        for (char character : msg.toCharArray()) {
+            webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, UtilsKeys.getKeyEvent(character)));
+        }
+        //webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+    }
+
+    private void clearData() {
+        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME));
+        for (int i = 0; i < 25; i++) {
+            webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_FORWARD_DEL));
+        }
+    }
 
     /**
      * Metodo ejecutado con el resultado del {@link Activity#startActivityForResult}, segun su utilizacion
@@ -201,9 +312,22 @@ public class MainActivity extends AppCompatActivity {
             scanContentResult = scanResult.getContents();
             Log.i(TAG, "onActivityResult" + scanFormatResult);
             Log.i(TAG, "onActivityResult" + scanContentResult);
+            String prueba = "1646265651114";
             if (scanResult.getContents() != null) {
+                Log.d(TAG, "onActivityResult(): no es nulo");
+                // Cuando se escanea como el foco lo tiene el elemento se simulan keypresseds
+                clearData();
+                loadData(scanContentResult);
+                if (scanContentResult.equals(prueba)) {
+                    Log.d(TAG, "onActivityResult(): valores coincidentes");
+                    Toast.makeText(this, "El codigo es correcto.", Toast.LENGTH_LONG).show();
+
+                } else {
+                    Log.d(TAG, "onActivityResult(): valores no coincidentes");
+                    Toast.makeText(this, "Error en el codigo. Vuelve a intentarlo.", Toast.LENGTH_LONG).show();
+                }
                 //webView.loadUrl("https://www.google.es");
-                webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResult);
+                //webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResult);
                 //Podemos pasar la informacion al usuario, para ello usamos un dialogo emergente
                 /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder
@@ -229,10 +353,11 @@ public class MainActivity extends AppCompatActivity {
                 builder.create().show();*/
 
             } else {
-                scanContentResult = "errorScan";
-                webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResult);
+                Log.d(TAG, "onActivityResult()Scanner cancelado");
+                clearData();
                 Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
-                finish();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
             }
         }
     }
@@ -250,41 +375,5 @@ public class MainActivity extends AppCompatActivity {
             // Si no lo hay, damos el control al Back de la Activity
             super.onBackPressed();
         }
-    }
-
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
-        client.disconnect();
     }
 }

@@ -11,6 +11,9 @@ import android.webkit.JavascriptInterface;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import me.sudar.zxingorient.Barcode;
+import me.sudar.zxingorient.ZxingOrient;
+
 /**
  * Created by mengroba on 25/01/2017.
  */
@@ -30,6 +33,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     private static final int STATE_MAP = 2;
     private static final int STATE_SCAN = 3;
     private static final int STATE_CAMERA = 4;
+    private ZxingOrient scanner;
     private Intent intent;
     private TextToSpeech tts;
     private String msg;
@@ -55,6 +59,18 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         intent.putExtra("STATE", STATE_CAMERA);
         context.startActivity(intent);
     }
+
+    @JavascriptInterface
+    public void startScan() {
+        //Creamos el scanner
+        scanner = new ZxingOrient((Activity) context);
+        scanner.setToolbarColor("#1c1c1c");
+        scanner.setIcon(R.drawable.ic_barcode_scan);
+        scanner.setInfo("Pulsa ATRÁS para cancelar");
+        scanner.setInfoBoxColor("#1c1c1c");
+        scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
+    }
+
 
     /**
      * Muestra un cuadro de dialogo del mensaje pasado por parametro en el HTML
