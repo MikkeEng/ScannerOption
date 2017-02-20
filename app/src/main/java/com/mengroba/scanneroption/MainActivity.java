@@ -37,7 +37,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int STATE_HOMEPAGE = 0;
     private static final int STATE_SCAN = 3;
-    private static final String WEB_HOME = "file:///android_asset/main_menu.html";
+    private static final String WEB_LOCAL =
+            "file///android-asset/main_menu.html";
+    private static final String WEB_SERVER =
+            "https://rawgit.com/MikkeEng/ScannerOption/v1.3_testBarcode/app/src/main/assets/main_menu.html";
 
     public WebView webView;
     private ProgressBar progressBar;
@@ -63,33 +66,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
-        //creamos el visor HTML
+        //definimos el visor HTML
         createWebView(this);
-
-        //Cargamos el WebView segun las elecciones en el HTML
-        //Por defecto se cargaria siempre la pagina principal
-        /*state = getIntent().getIntExtra("STATE", STATE_HOMEPAGE);
-        switch (state) {
-            case STATE_HOMEPAGE:
-                webView.loadUrl(WEB_HOME);
-                break;
-            *//*Si se ha pulsado el boton de escanear codigo de barras, se hace uso de la
-            libreria zxing para lanzar el escaner*//*
-            case STATE_SCAN:
-                //se edita el layout del scanner
-                scanner = new ZxingOrient(MainActivity.this);
-                scanner.setToolbarColor("#1c1c1c");
-                scanner.setIcon(R.drawable.ic_barcode_scan);
-                scanner.setInfo("Pulsa ATRÁS para cancelar");
-                scanner.setInfoBoxColor("#1c1c1c");
-                scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
-                break;
-            default:
-                webView.loadUrl(WEB_HOME);
-                break;
-        */ //Fin del switch
-
-        // definimos el visor HTML
+        // creamos el visor HTML
         startWebView();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -139,19 +118,15 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
 
                     if (hr.getType() == 9) {
-                        /*webView.loadUrl(javascritpt +
+                        webView.loadUrl(javascritpt +
                                 jsFunction +
-                                    "var elementClass = document.getElementsByTagName('class');" +
-                                    "for(var i = 0; i < elementClass.length; i++) {" +
-                                        "console.log('num de class: ' + elementClass.length);" +
-                                        "if(scanClass.className.toLowerCase() == 'scanner') {" +
-                                            "var elementClass = document.getElementsByTagName('class');" +
-                                            "console.log('valor scanClass: ' + scanClass);" +
-                                            "Android.startScan();" +
-                                        "}" +
+                                "var elementScanner = document.querySelector('.scanner');" +
+                                "if(elementScanner){" +
+                                "console.log('nombre de clase: ' + elementScanner.name);" +
+                                "Android.startScan();" +
                                     "}" +
                                 "})()"
-                        );*/
+                        );
                         /*webView.loadUrl(javascritpt +
                                 jsFunction +
                                     "var elementClass = document.getElementsByTagName('class');" +
@@ -167,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                         );*/
 
                         Log.d(TAG, "onTouch():findFocus" + v.findFocus());
-                        startScanMain();
+                        //startScanMain();
                     }
                 }
                 return false;
@@ -201,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.loadUrl(WEB_HOME);
+        webView.loadUrl(WEB_SERVER);
 
     } //Fin de createWebView()
 
@@ -285,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
         for (char character : msg.toCharArray()) {
             webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, UtilsKeys.getKeyEvent(character)));
         }
-        //webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
     }
 
     private void clearData() {
