@@ -3,15 +3,19 @@ package com.mengroba.scanneroption;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
@@ -21,9 +25,7 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.mengroba.scanneroption.utils.UtilsKeys;
 
@@ -35,21 +37,18 @@ public class MainActivity extends AppCompatActivity {
 
     //TAG para el Log Info
     private static final String TAG = "MainActivity";
-    private static final int STATE_HOMEPAGE = 0;
-    private static final int STATE_SCAN = 3;
     private static final String WEB_LOCAL =
-            "file///android-asset/main_menu.html";
-    private static final String WEB_SERVER =
-            "https://rawgit.com/MikkeEng/ScannerOption/v1.3_testBarcode/app/src/main/assets/main_menu.html";
+            "file:///android_asset/main_menu.html";
+    private static final int BEEP_OK = 1;
+    private static final int BEEP_ERROR = 2;
 
     public WebView webView;
     private ProgressBar progressBar;
-    private int state;
 
-    private String url;
     private ZxingOrient scanner;
     private String scanContentResult;
     private String scanFormatResult;
+    private WebAppInterface webInterface;
     //Elementos HTML
     private final String javascritpt = "javascript:(";
     private final String jsFunction = "function() {";
@@ -60,12 +59,14 @@ public class MainActivity extends AppCompatActivity {
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
+    private long eventDuration;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
+        webInterface = new WebAppInterface(this);
         //definimos el visor HTML
         createWebView(this);
         // creamos el visor HTML
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Creamos el visor WebView para cargar el HTML
      */
-    private void createWebView(Context context) {
+    private void createWebView(final Context context) {
 
         //Enlazamos los elementos graficos
         webView = (WebView) findViewById(R.id.webView1);
@@ -90,59 +91,81 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
         // Ajustamos el HTML al WebView
-        webView.getSettings().setLoadWithOverviewMode(true);
+        //webView.getSettings().setLoadWithOverviewMode(true);
+        webView.getSettings().setUseWideViewPort(true);
         //añadimos scroll
         webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         webView.setScrollbarFadingEnabled(false);
         //habilitamos el uso de mediaplayer sin gestos
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        //habilitamos el tratamiento de ficheros
+        webView.getSettings().setAllowFileAccess(true);
         //habilitamos las opciones de zoom
         /*webView.getSettings().setSupportZoom(true);
         webView.getSettings().setBuiltInZoomControls(true);*/
-        //Si queremos habilitar plugins al WebView (no se recomienda por seguridad)
-        //webView.getSettings().setPluginState(WebSettings.PluginState.OFF);
-        //habilitamos el tratamiento de ficheros
-        webView.getSettings().setAllowFileAccess(true);
 
         webView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                /*if (v.hasFocus()) {
-                    v.requestFocus();
-                }*/
+
+                eventDuration = event.getEventTime() - event.getDownTime();
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
 
-                    WebView.HitTestResult hr = ((WebView) v).getHitTestResult();
-                    Log.d(TAG, "HitTestResult:" + webView.getHitTestResult());
-                    Log.d(TAG, "getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
+                    /*ViewTreeObserver viewTreeObserver  = webView.getViewTreeObserver();
 
-                    if (hr.getType() == 9) {
+                    viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                        @Override
+                        public boolean onPreDraw() {
+                            int height = webView.getMeasuredHeight();
+                            if( height != 0 ){
+                                Toast.makeText(MainActivity.this, "height:"+height,Toast.LENGTH_SHORT).show();
+                                webView.getViewTreeObserver().removeOnPreDrawListener(this);
+                            }
+                            return false;
+                        }
+                    });*/
+
+                    /*DisplayMetrics displayMetrics = new DisplayMetrics();
+                    getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                    int heightMetrics = displayMetrics.heightPixels;
+                    Toast.makeText(context, "heightMetrics: " + heightMetrics, Toast.LENGTH_SHORT).show();*/
+
+
+                    WebView.HitTestResult hr = ((WebView) v).getHitTestResult();
+                    Log.d(TAG, "onTouch():findFocus" + v.findFocus());
+                    Log.d(TAG, "HitTestResult:" + webView.getHitTestResult());
+                    Log.d(TAG, "HitTestResult: getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
+                    Log.d(TAG, "onTouch()eventDuration = " + eventDuration);
+
+                    if (hr.getType() == 9 && eventDuration > 500) {
+
                         webView.loadUrl(javascritpt +
                                 jsFunction +
-                                "var elementScanner = document.querySelector('.scanner');" +
-                                "if(elementScanner){" +
-                                "console.log('nombre de clase: ' + elementScanner.name);" +
+                                "var listElementScanner = document.querySelectorAll('.scanner');" +
+                                "console.log('num de class: ' + listElementScanner.length);" +
+                                "for(var i = 0; i < listElementScanner.length; i++) {" +
+                                "var elementScanner = listElementScanner[i];" +
+                                "console.log('name de elemento: ' + elementScanner.name);" +
+                                "if(elementScanner == document.activeElement){" +
                                 "Android.startScan();" +
+                                "}" +
                                     "}" +
                                 "})()"
                         );
-                        /*webView.loadUrl(javascritpt +
+                    } else {
+                        webView.loadUrl(javascritpt +
                                 jsFunction +
-                                    "var elementClass = document.getElementsByTagName('class');" +
-                                    "for(var i = 0; i < elementClass.length; i++) {" +
-                                        "console.log('num de class: ' + elementClass.length);" +
-                                        "if(scanClass.className.toLowerCase() == 'scanner') {" +
-                                            "var elementClass = document.getElementsByTagName('class');" +
-                                            "console.log('valor scanClass: ' + scanClass);" +
-                                            "Android.startScan();" +
-                                        "}" +
+                                "var listElementScanner = document.querySelectorAll('.scanner');" +
+                                "console.log('num de class: ' + listElementScanner.length);" +
+                                "for(var i = 0; i < listElementScanner.length; i++) {" +
+                                "var elementScanner = listElementScanner[i];" +
+                                "elementScanner.autocomplete = 'off';" +
+                                "elementScanner.placeholder = 'Manten para escanear';" +
                                     "}" +
                                 "})()"
-                        );*/
+                        );
 
-                        Log.d(TAG, "onTouch():findFocus" + v.findFocus());
-                        //startScanMain();
                     }
                 }
                 return false;
@@ -156,27 +179,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "onFocusChange(): " + v.getOnFocusChangeListener());
 
                 //TODO si el elemento tiene el class de html scanner entonces abrimos el scanner.
-                //Pero como sabemos que elemento es al que hay incluir la clase? Como lo detectamos?
+                //el foco siempre se queda en el webview
                 if (hasFocus) {
                     Toast.makeText(getApplicationContext(), "Has Focus", Toast.LENGTH_SHORT).show();
                 }
-                /*webView.loadUrl(javascritpt +
-                        jsFunction +
-                            "var inputs = document.getElementsByTagName('input');" +
-                            "for(var i = 0; i < inputs.length; i++) {" +
-                                "console.log('num de inputs: ' + inputs.length);" +
-                                "if(inputs[i].type.toLowerCase() == 'text') {" +
-                                    "console.log('valor de input: ' + inputs[i].value);" +
-                                    "alert(inputs[i].value);" +
-                                "}" +
-                            "}" +
-                        "})()"
-                );*/
-
             }
         });
 
-        webView.loadUrl(WEB_SERVER);
+        webView.loadUrl(WEB_LOCAL);
 
     } //Fin de createWebView()
 
@@ -256,18 +266,22 @@ public class MainActivity extends AppCompatActivity {
         scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
     }
 
-    private void loadData(String msg) {
+    private void loadKeys(String msg) {
         for (char character : msg.toCharArray()) {
             webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, UtilsKeys.getKeyEvent(character)));
         }
         webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
     }
 
-    private void clearData() {
+    private void clearKeys() {
         webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME));
         for (int i = 0; i < 25; i++) {
             webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_FORWARD_DEL));
         }
+    }
+
+    private void enterKeys() {
+        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
     }
 
     /**
@@ -289,51 +303,72 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "onActivityResult" + scanContentResult);
             String prueba = "1646265651114";
             if (scanResult.getContents() != null) {
+                /*if (scanContentResult.length() != 13) {
+                    Log.d(TAG, "Tonegenerator error beep");
+                    beepTone(BEEP_ERROR);
+                    //webInterface.textSpeech("El codigo no es correcto");
+                }*/
                 Log.d(TAG, "onActivityResult(): no es nulo");
                 // Cuando se escanea como el foco lo tiene el elemento se simulan keypresseds
-                clearData();
-                loadData(scanContentResult);
-                if (scanContentResult.equals(prueba)) {
+                clearKeys();
+                loadKeys(scanContentResult);
+                /*if (scanContentResult.equals(prueba)) {
                     Log.d(TAG, "onActivityResult(): valores coincidentes");
-                    Toast.makeText(this, "El codigo es correcto.", Toast.LENGTH_LONG).show();
+                    //beepTone(BEEP_OK);
+                    //Toast.makeText(this, "El codigo es correcto.", Toast.LENGTH_LONG).show();
 
                 } else {
                     Log.d(TAG, "onActivityResult(): valores no coincidentes");
                     Toast.makeText(this, "Error en el codigo. Vuelve a intentarlo.", Toast.LENGTH_LONG).show();
-                }
-                //webView.loadUrl("https://www.google.es");
-                //webView.loadUrl("file:///android_asset/scannerTest.html?value=" + scanContentResult);
-                //Podemos pasar la informacion al usuario, para ello usamos un dialogo emergente
-                /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder
-                        .setMessage("El formato es: " + scanFormatResult + "\n" +
-                                "y el codigo es: " + scanContentResult)
-                        .setPositiveButton("Guardar codigo", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Toast.makeText(MainActivity.this, "Guardando codigo", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                                webView.loadUrl("file:///android_asset/scannerOK.html?valor=" + scanContentResult);
-                            }
-                        })
-                        .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Toast.makeText(MainActivity.this, "Cancelando operación...", Toast.LENGTH_LONG).show();
-                                dialog.dismiss();
-                                finish();
-                            }
-                        });
-                //Creamos el dialogo
-                builder.create().show();*/
+                }*/
 
             } else {
                 Log.d(TAG, "onActivityResult()Scanner cancelado");
-                clearData();
+                clearKeys();
+                enterKeys();
                 Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
-                InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+                //beepTone(BEEP_ERROR);
+                //webInterface.textSpeech("No se ha obtenido ningun dato");
             }
+        }
+    }
+
+    /*private int getScale(){
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
+        int widthDevice = displayMetrics.widthPixels;
+
+        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        int width = display.getWidth();
+        Double val = new Double(width)/new Double(widthDevice);
+        val = val * 100d;
+        return val.intValue();
+    }*/
+
+    public void beepTone(int status) {
+        ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+
+        try {
+            switch (status) {
+                case BEEP_OK:
+                    tg.startTone(ToneGenerator.TONE_PROP_ACK, 500);
+                    Thread.sleep(500);
+                    tg.release();
+                    break;
+                case BEEP_ERROR:
+                    tg.startTone(ToneGenerator.TONE_PROP_NACK, 500);
+                    Thread.sleep(500);
+                    tg.release();
+                    break;
+                default:
+                    tg.startTone(ToneGenerator.TONE_PROP_NACK, 500);
+                    Thread.sleep(500);
+                    tg.release();
+                    break;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

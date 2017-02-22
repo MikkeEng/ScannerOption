@@ -11,6 +11,13 @@ import android.webkit.JavascriptInterface;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
 
@@ -25,12 +32,7 @@ import me.sudar.zxingorient.ZxingOrient;
 public class WebAppInterface implements TextToSpeech.OnInitListener {
 
     private Context context;
-    private static final String URLGOOGLE =
-            "https://www.google.es/search?sourceid=chrome-psyapi2&rlz=1C1CAFA_enES728ES728&ion=1&espv=2&ie=UTF-8&q=";
-    private static final String URLMAP1 = "https://www.google.es/maps/place//@";
-    private static final String URLMAP2 = ",15z/data=!4m5!3m4!1s0x0:0x0!8m2!3d";
     private static final int STATE_SEARCH = 1;
-    private static final int STATE_MAP = 2;
     private static final int STATE_SCAN = 3;
     private static final int STATE_CAMERA = 4;
     private ZxingOrient scanner;
@@ -71,6 +73,34 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
     }
 
+    public static Map<String, List<String>> getParamsByUrl(String url) {
+        try {
+            Map<String, List<String>> params = new HashMap<String, List<String>>();
+            String[] urlParts = url.split("\\?");
+            if (urlParts.length > 1) {
+                String query = urlParts[1];
+                for (String param : query.split("&")) {
+                    String[] pair = param.split("=");
+                    String key = URLDecoder.decode(pair[0], "UTF-8");
+                    String value = "";
+                    if (pair.length > 1) {
+                        value = URLDecoder.decode(pair[1], "UTF-8");
+                    }
+
+                    List<String> values = params.get(key);
+                    if (values == null) {
+                        values = new ArrayList<String>();
+                        params.put(key, values);
+                    }
+                    values.add(value);
+                }
+            }
+
+            return params;
+        } catch (UnsupportedEncodingException ex) {
+            throw new AssertionError(ex);
+        }
+    }
 
     /**
      * Muestra un cuadro de dialogo del mensaje pasado por parametro en el HTML
@@ -86,35 +116,6 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                 dialog.dismiss();
             }
         });
-        //Creamos el dialogo
-        builder.create().show();
-    }
-
-    /**
-     * Muestra un cuadro de dialogo del mensaje pasado por parametro en el HTML
-     * @param msg
-     */
-    @JavascriptInterface
-    public void showScanCode(String msg) {
-        //Usamos una clase Builder para la construccion del dialogo
-        AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
-        builder
-                .setMessage("El codigo es: " + msg)
-                .setPositiveButton("Guardar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(context, "Guardando codigo", Toast.LENGTH_LONG).show();
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(context, "Cancelando operación...", Toast.LENGTH_LONG).show();
-                        dialog.dismiss();
-                    }
-                });
-
         //Creamos el dialogo
         builder.create().show();
     }
@@ -147,19 +148,6 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         intent = new Intent(context, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("STATE", STATE_SCAN);
-        context.startActivity(intent);
-    }
-
-        /**
-     * Metodo que lanza el buscador cuando se presiona el boton correspondiente en el HTML     *
-     * @param texto
-     */
-    @JavascriptInterface
-    public void showWebPage(String texto) {
-        //Pasamos a MainActivity el texto a buscar
-        intent = new Intent(context, MainActivity.class);
-        intent.putExtra("STATE", STATE_SEARCH);
-        intent.putExtra("SEARCH", URLGOOGLE + texto);
         context.startActivity(intent);
     }
 
