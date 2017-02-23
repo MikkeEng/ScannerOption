@@ -3,18 +3,12 @@ package com.mengroba.scanneroption;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
-import android.media.ToneGenerator;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
@@ -34,6 +28,11 @@ import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
 import me.sudar.zxingorient.ZxingOrientResult;
 
+import static com.mengroba.scanneroption.WebAppInterface.JS_JAVASCRIPT;
+import static com.mengroba.scanneroption.WebAppInterface.JS_FUNCTION;
+import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN;
+import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN_IF_EMPTY;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
@@ -50,9 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private String scanContentResult;
     private String scanFormatResult;
     //Elementos HTML
-    private WebAppInterface webInterface;
-    private final String javascritpt = "javascript:(";
-    private final String jsFunction = "function() {";
+    private WebAppInterface wItf;
 
     private static final int BARCODE_RESULTCODE = 100;
     /**
@@ -61,14 +58,16 @@ public class MainActivity extends AppCompatActivity {
      */
     private GoogleApiClient client;
     private long eventDuration;
+    private int valorScan;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
-        webInterface = new WebAppInterface(this);
+        wItf = new WebAppInterface(this);
         utils = new UtilsTools(this);
+        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         //definimos el visor HTML
         createWebView(this);
         // creamos el visor HTML
@@ -112,46 +111,24 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
+            public boolean onTouch(View view, MotionEvent event) {
                 eventDuration = event.getEventTime() - event.getDownTime();
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
+                    WebView.HitTestResult hr = ((WebView) view).getHitTestResult();
 
-                    WebView.HitTestResult hr = ((WebView) v).getHitTestResult();
-                    Log.d(TAG, "onTouch():findFocus" + v.findFocus());
+                    Log.d(TAG, "onTouch():findFocus" + view.findFocus());
                     Log.d(TAG, "HitTestResult:" + webView.getHitTestResult());
                     Log.d(TAG, "HitTestResult: getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
                     Log.d(TAG, "onTouch()eventDuration = " + eventDuration);
 
                     if (hr.getType() == 9 && eventDuration > 500) {
-
-                        webView.loadUrl(javascritpt +
-                                jsFunction +
-                                "var listElementScanner = document.querySelectorAll('.scanner');" +
-                                "console.log('num de class: ' + listElementScanner.length);" +
-                                "for(var i = 0; i < listElementScanner.length; i++) {" +
-                                "var elementScanner = listElementScanner[i];" +
-                                "console.log('name de elemento: ' + elementScanner.name);" +
-                                "if(elementScanner == document.activeElement){" +
-                                "Android.startScan();" +
-                                "}" +
-                                    "}" +
-                                "})()"
-                        );
+                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN);
                     } else {
-                        webView.loadUrl(javascritpt +
-                                jsFunction +
-                                "var listElementScanner = document.querySelectorAll('.scanner');" +
-                                "console.log('num de class: ' + listElementScanner.length);" +
-                                "for(var i = 0; i < listElementScanner.length; i++) {" +
-                                "var elementScanner = listElementScanner[i];" +
-                                "elementScanner.autocomplete = 'off';" +
-                                "elementScanner.placeholder = 'Manten para escanear';" +
-                                    "}" +
-                                "})()"
-                        );
 
+                        //utils.hideKeyboard(MainActivity.this);
+
+                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
                     }
                 }
                 return false;
@@ -177,7 +154,6 @@ public class MainActivity extends AppCompatActivity {
     } //Fin de createWebView()
 
 
-
     /**
      * Iniciamos un cliente de WebView que es llamado al abrir el HTML
      */
@@ -188,18 +164,18 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
+            public void onPageFinished(WebView webView, String url) {
+                super.onPageFinished(webView, url);
                 // Estado del teclado segun la pagina en la que estemos
                 imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                Log.d(TAG, "onPageFinished(): "+ view.getTitle());
+                Log.d(TAG, "onPageFinished(): " + webView.getTitle());
 
-                switch (view.getTitle()) {
+                switch (webView.getTitle()) {
                     case "Opciones":
-                        imm.showSoftInput(view, 0);
+                        imm.showSoftInput(webView, 0);
                         break;
                     case "Información de bloque":
-                        utils.hideKeyboard(webView.getContext(), webView);
+                        utils.hideKeyboard(MainActivity.this);
                         break;
                     default:
                         break;
@@ -212,7 +188,6 @@ public class MainActivity extends AppCompatActivity {
          * seleccionar un archivo desde la aplicacion de camara o del almacenamiento.
          */
         webView.setWebChromeClient(new WebChromeClient() {
-
 
 
             @Override
@@ -240,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                 }
             }
-
 
 
             /**
@@ -320,9 +294,10 @@ public class MainActivity extends AppCompatActivity {
 
             } else {
                 Log.d(TAG, "onActivityResult()Scanner cancelado");
-                UtilsKeys.clearKeys(webView);
-                UtilsKeys.enterKeys(webView);
-                Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
+                //Opcion de borrado de valor al cancelar el escaneo (por defecto se mantiene el valor)
+                // UtilsKeys.clearKeys(webView);
+                utils.showKeyboard(MainActivity.this);
+                //Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
                 //beepTone(BEEP_ERROR);
                 //webInterface.textSpeech("No se ha obtenido ningun dato");
             }

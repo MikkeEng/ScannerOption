@@ -31,6 +31,34 @@ import me.sudar.zxingorient.ZxingOrient;
  */
 public class WebAppInterface implements TextToSpeech.OnInitListener {
 
+    //JS//
+    public static final String JS_JAVASCRIPT = "javascript:(";
+    public static final String JS_FUNCTION = "function() {";
+    public static final String JS_ELEMENT_SCANNER =
+            "var listElementScanner = document.querySelectorAll('.scanner');" +
+                    "var actElement = document.activeElement;" +
+                    "for(var i = 0; i < listElementScanner.length; i++) {" +
+                    "var elementScanner = listElementScanner[i];";
+    public static final String JS_START_SCAN = JS_ELEMENT_SCANNER +
+            "if(elementScanner === actElement){" +
+            "Android.startScan();" +
+            "}" +
+            "}" +
+            "})()";
+    public static final String JS_START_SCAN_IF_EMPTY = JS_ELEMENT_SCANNER +
+            "var elementValue = elementScanner.value;" +
+            "elementScanner.autocomplete = 'off';" +
+            "elementScanner.placeholder = 'Pulsa para escanear';" +
+            "console.log('name de elemento: ' + elementScanner.name);" +
+            "console.log('elemento activo: ' + actElement);" +
+            "console.log('valor de elemento: ' + elementValue);" +
+            "if(elementScanner === actElement && !elementValue){" +
+            "console.log('Activacion de escaner');" +
+            "Android.startScan();" +
+            "}" +
+            "}" +
+            "})()";
+
     private Context context;
     private static final int STATE_SEARCH = 1;
     private static final int STATE_SCAN = 3;

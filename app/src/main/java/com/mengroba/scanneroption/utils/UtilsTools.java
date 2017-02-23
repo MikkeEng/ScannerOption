@@ -52,20 +52,23 @@ public class UtilsTools {
         }
     }
 
+    public static void toggleKey(Activity activity){
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        if (imm.isActive()){
+            imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
+        } else {
+            imm.toggleSoftInput(0, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
+        }
+    }//end method
 
-    public void hideKeyboard(final Context context, final WebView webView){
-        final Activity activity = (Activity) webView.getContext();
-        imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        webView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                int heightDiff = webView.getRootView().getHeight() - webView.getHeight();
-                if (heightDiff > dpToPx(context, 200)) {
-                    imm.hideSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
-                }
-            }
-        });
+    public void hideKeyboard(final Activity activity){
+        final InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
+    }
 
+    public void showKeyboard(final Activity activity){
+        final InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(0, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
     }
 
     public static float dpToPx(Context context, float valueInDp) {
