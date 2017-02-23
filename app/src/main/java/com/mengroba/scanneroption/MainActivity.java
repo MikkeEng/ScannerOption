@@ -8,10 +8,13 @@ import android.media.ToneGenerator;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
@@ -25,6 +28,7 @@ import android.widget.Toast;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.mengroba.scanneroption.utils.UtilsKeys;
+import com.mengroba.scanneroption.utils.UtilsTools;
 
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
@@ -32,25 +36,25 @@ import me.sudar.zxingorient.ZxingOrientResult;
 
 public class MainActivity extends AppCompatActivity {
 
-    //TAG para el Log Info
     private static final String TAG = "MainActivity";
     private static final String WEB_LOCAL =
             "file:///android_asset/main_menu.html";
-    private static final int BEEP_OK = 1;
-    private static final int BEEP_ERROR = 2;
+
+    private UtilsTools utils;
 
     public WebView webView;
     private ProgressBar progressBar;
-
+    private InputMethodManager imm;
+    //Scanner
     private ZxingOrient scanner;
     private String scanContentResult;
     private String scanFormatResult;
-    private WebAppInterface webInterface;
     //Elementos HTML
+    private WebAppInterface webInterface;
     private final String javascritpt = "javascript:(";
     private final String jsFunction = "function() {";
 
-    private static final int BARCODE_RESULTCODE = 49374;
+    private static final int BARCODE_RESULTCODE = 100;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -64,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
         webInterface = new WebAppInterface(this);
+        utils = new UtilsTools(this);
         //definimos el visor HTML
         createWebView(this);
         // creamos el visor HTML
@@ -101,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         //habilitamos las opciones de zoom
         settings.setBuiltInZoomControls(false);
         settings.setSupportZoom(false);
-        settings.setTextZoom(150);
+        settings.setTextZoom(125);
         /*settings.setSupportZoom(true);
         settings.setBuiltInZoomControls(true);*/
 
@@ -171,6 +176,8 @@ public class MainActivity extends AppCompatActivity {
 
     } //Fin de createWebView()
 
+
+
     /**
      * Iniciamos un cliente de WebView que es llamado al abrir el HTML
      */
@@ -183,12 +190,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // Mostramos el teclado al cargar la pagina de index
+                // Estado del teclado segun la pagina en la que estemos
+                imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 Log.d(TAG, "onPageFinished(): "+ view.getTitle());
-                if (view.getTitle().equals("Opciones")) {
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.showSoftInput(view, 0);
-                    //webView.setInitialScale(200);
+
+                switch (view.getTitle()) {
+                    case "Opciones":
+                        imm.showSoftInput(view, 0);
+                        break;
+                    case "Información de bloque":
+                        utils.hideKeyboard(webView.getContext(), webView);
+                        break;
+                    default:
+                        break;
                 }
             }
         });
@@ -264,24 +278,6 @@ public class MainActivity extends AppCompatActivity {
         scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
     }
 
-    private void loadKeys(String msg) {
-        for (char character : msg.toCharArray()) {
-            webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, UtilsKeys.getKeyEvent(character)));
-        }
-        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
-    }
-
-    private void clearKeys() {
-        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME));
-        for (int i = 0; i < 25; i++) {
-            webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_FORWARD_DEL));
-        }
-    }
-
-    private void enterKeys() {
-        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
-    }
-
     /**
      * Metodo ejecutado con el resultado del {@link Activity#startActivityForResult}, segun su utilizacion
      *
@@ -292,6 +288,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent intent) {
 
+        Log.d(TAG, "ResultScan.requesCode" + requestCode);
+
         if (requestCode == BARCODE_RESULTCODE) {
             //Cargamos la libreria Zxing a traves de scanResult y parseamos el resultado
             ZxingOrientResult scanResult = ZxingOrient.parseActivityResult(requestCode, resultCode, intent);
@@ -299,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
             scanContentResult = scanResult.getContents();
             Log.i(TAG, "onActivityResult" + scanFormatResult);
             Log.i(TAG, "onActivityResult" + scanContentResult);
-            String prueba = "1646265651114";
+            //String prueba = "1646265651114";
             if (scanResult.getContents() != null) {
                 /*if (scanContentResult.length() != 13) {
                     Log.d(TAG, "Tonegenerator error beep");
@@ -308,8 +306,8 @@ public class MainActivity extends AppCompatActivity {
                 }*/
                 Log.d(TAG, "onActivityResult(): no es nulo");
                 // Cuando se escanea como el foco lo tiene el elemento se simulan keypresseds
-                clearKeys();
-                loadKeys(scanContentResult);
+                UtilsKeys.clearKeys(webView);
+                UtilsKeys.loadKeys(webView, scanContentResult);
                 /*if (scanContentResult.equals(prueba)) {
                     Log.d(TAG, "onActivityResult(): valores coincidentes");
                     //beepTone(BEEP_OK);
@@ -322,51 +320,12 @@ public class MainActivity extends AppCompatActivity {
 
             } else {
                 Log.d(TAG, "onActivityResult()Scanner cancelado");
-                clearKeys();
-                enterKeys();
+                UtilsKeys.clearKeys(webView);
+                UtilsKeys.enterKeys(webView);
                 Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
                 //beepTone(BEEP_ERROR);
                 //webInterface.textSpeech("No se ha obtenido ningun dato");
             }
-        }
-    }
-
-    /*private int getScale(){
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int height = displayMetrics.heightPixels;
-        int widthDevice = displayMetrics.widthPixels;
-
-        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int width = display.getWidth();
-        Double val = new Double(width)/new Double(widthDevice);
-        val = val * 100d;
-        return val.intValue();
-    }*/
-
-    public void beepTone(int status) {
-        ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
-
-        try {
-            switch (status) {
-                case BEEP_OK:
-                    tg.startTone(ToneGenerator.TONE_PROP_ACK, 500);
-                    Thread.sleep(500);
-                    tg.release();
-                    break;
-                case BEEP_ERROR:
-                    tg.startTone(ToneGenerator.TONE_PROP_NACK, 500);
-                    Thread.sleep(500);
-                    tg.release();
-                    break;
-                default:
-                    tg.startTone(ToneGenerator.TONE_PROP_NACK, 500);
-                    Thread.sleep(500);
-                    tg.release();
-                    break;
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

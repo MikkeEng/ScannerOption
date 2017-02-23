@@ -17,7 +17,7 @@ import com.google.zxing.client.android.Intents;
 
 public class ZxingOrient {
 
-    public static final int REQUEST_CODE = 0x0000c0de; // Only use bottom 16 bits
+    public static final int REQUEST_CODE = 100; // Only use bottom 16 bits
     private static final String TAG = ZxingOrient.class.getSimpleName();
 
     private static final String BS_PACKAGE = "me.sudar.zxing";

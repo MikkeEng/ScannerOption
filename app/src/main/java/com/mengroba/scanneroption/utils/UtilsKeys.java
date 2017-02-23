@@ -1,6 +1,7 @@
 package com.mengroba.scanneroption.utils;
 
 import android.view.KeyEvent;
+import android.webkit.WebView;
 
 /**
  * Created by miguelef on 16/02/2017.
@@ -49,10 +50,15 @@ public enum UtilsKeys {
 
     private int event;
     private char character;
+    private WebView webView;
 
     UtilsKeys(int event, char character) {
         this.event = event;
         this.character = character;
+    }
+
+    UtilsKeys(WebView webView) {
+        this.webView = webView;
     }
 
     public static int getKeyEvent(char character) {
@@ -63,6 +69,24 @@ public enum UtilsKeys {
         }
 
         return -1;
+    }
+
+    public static void loadKeys(WebView webView, String msg) {
+        for (char character : msg.toCharArray()) {
+            webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, UtilsKeys.getKeyEvent(character)));
+        }
+        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+    }
+
+    public static void clearKeys(WebView webView) {
+        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME));
+        for (int i = 0; i < 25; i++) {
+            webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_FORWARD_DEL));
+        }
+    }
+
+    public static void enterKeys(WebView webView) {
+        webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
     }
 }
 
