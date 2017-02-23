@@ -8,14 +8,10 @@ import android.media.ToneGenerator;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
@@ -91,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
         // Ajustamos el HTML al WebView
-        //webView.getSettings().setLoadWithOverviewMode(true);
+        webView.getSettings().setLoadWithOverviewMode(true);
         webView.getSettings().setUseWideViewPort(true);
         //añadimos scroll
         webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
@@ -111,26 +107,6 @@ public class MainActivity extends AppCompatActivity {
                 eventDuration = event.getEventTime() - event.getDownTime();
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
-
-                    /*ViewTreeObserver viewTreeObserver  = webView.getViewTreeObserver();
-
-                    viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                        @Override
-                        public boolean onPreDraw() {
-                            int height = webView.getMeasuredHeight();
-                            if( height != 0 ){
-                                Toast.makeText(MainActivity.this, "height:"+height,Toast.LENGTH_SHORT).show();
-                                webView.getViewTreeObserver().removeOnPreDrawListener(this);
-                            }
-                            return false;
-                        }
-                    });*/
-
-                    /*DisplayMetrics displayMetrics = new DisplayMetrics();
-                    getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-                    int heightMetrics = displayMetrics.heightPixels;
-                    Toast.makeText(context, "heightMetrics: " + heightMetrics, Toast.LENGTH_SHORT).show();*/
-
 
                     WebView.HitTestResult hr = ((WebView) v).getHitTestResult();
                     Log.d(TAG, "onTouch():findFocus" + v.findFocus());
@@ -195,8 +171,20 @@ public class MainActivity extends AppCompatActivity {
      */
     private void startWebView() {
 
+
         // Hacemos que todas las paginas se carguen en el mismo WebView
         webView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // Mostramos el teclado al cargar la pagina de index
+                Log.d(TAG, "onPageFinished(): "+ view.getTitle());
+                if (view.getTitle().equals("Opciones")) {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.showSoftInput(view, 0);
+                }
+            }
         });
 
         /**
@@ -204,6 +192,8 @@ public class MainActivity extends AppCompatActivity {
          * seleccionar un archivo desde la aplicacion de camara o del almacenamiento.
          */
         webView.setWebChromeClient(new WebChromeClient() {
+
+
 
             @Override
             public void onPermissionRequest(PermissionRequest request) {
@@ -230,6 +220,8 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                 }
             }
+
+
 
             /**
              * Enviamos un mensaje por Javascript en caso de error en el WebChromeClient
