@@ -16,6 +16,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -81,24 +82,28 @@ public class MainActivity extends AppCompatActivity {
         //Enlazamos los elementos graficos
         webView = (WebView) findViewById(R.id.webView1);
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
+        WebSettings settings = webView.getSettings();
         //Enlazamos WebAppInterface entre el codigo JavaScript y el codigo Android
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         //Accedemos a la configuracion del WebView y habilitamos el javascript
-        webView.getSettings().setJavaScriptEnabled(true);
+        settings.setJavaScriptEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
         // Ajustamos el HTML al WebView
-        webView.getSettings().setLoadWithOverviewMode(true);
-        webView.getSettings().setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
         //añadimos scroll
         webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         webView.setScrollbarFadingEnabled(false);
         //habilitamos el uso de mediaplayer sin gestos
-        webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        settings.setMediaPlaybackRequiresUserGesture(false);
         //habilitamos el tratamiento de ficheros
-        webView.getSettings().setAllowFileAccess(true);
+        settings.setAllowFileAccess(true);
         //habilitamos las opciones de zoom
-        /*webView.getSettings().setSupportZoom(true);
-        webView.getSettings().setBuiltInZoomControls(true);*/
+        settings.setBuiltInZoomControls(false);
+        settings.setSupportZoom(false);
+        settings.setTextZoom(150);
+        /*settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);*/
 
         webView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -183,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 if (view.getTitle().equals("Opciones")) {
                     InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.showSoftInput(view, 0);
+                    //webView.setInitialScale(200);
                 }
             }
         });
