@@ -34,6 +34,20 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     //JS//
     public static final String JS_JAVASCRIPT = "javascript:(";
     public static final String JS_FUNCTION = "function() {";
+    public static final String JS_LOAD_PAGE =
+            "var listElementScanner = document.querySelectorAll('.scanner');" +
+                    "var actElement = document.activeElement;" +
+                    "for(var i = 0; i < listElementScanner.length; i++) {" +
+                        "var elementScanner = listElementScanner[i];" +
+                        "console.log('name de elemento: ' + elementScanner.name);" +
+                        "console.log('elemento activo: ' + actElement);" +
+                        "console.log('valor de autocomplete antes: ' + actElement.autocomplete);" +
+                        "elementScanner.autocomplete = 'off';" +
+                        "console.log('valor de autocomplete despues: ' + actElement.autocomplete);" +
+                        "elementScanner.placeholder = 'Pulsa y escanea';" +
+                    "}" +
+                    "})()";
+
     public static final String JS_ELEMENT_SCANNER =
             "var listElementScanner = document.querySelectorAll('.scanner');" +
                     "var actElement = document.activeElement;" +
@@ -47,11 +61,10 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
             "})()";
     public static final String JS_START_SCAN_IF_EMPTY = JS_ELEMENT_SCANNER +
             "var elementValue = elementScanner.value;" +
-            "elementScanner.autocomplete = 'off';" +
-            "elementScanner.placeholder = 'Pulsa para escanear';" +
             "console.log('name de elemento: ' + elementScanner.name);" +
             "console.log('elemento activo: ' + actElement);" +
             "console.log('valor de elemento: ' + elementValue);" +
+            "console.log('valor de autocomplete: ' + actElement.autocomplete);" +
             "if(elementScanner === actElement && !elementValue){" +
             "console.log('Activacion de escaner');" +
             "Android.startScan();" +

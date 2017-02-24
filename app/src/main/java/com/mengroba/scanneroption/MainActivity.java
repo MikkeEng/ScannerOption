@@ -28,9 +28,9 @@ import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
 import me.sudar.zxingorient.ZxingOrientResult;
 
+import static com.mengroba.scanneroption.WebAppInterface.JS_LOAD_PAGE;
 import static com.mengroba.scanneroption.WebAppInterface.JS_JAVASCRIPT;
 import static com.mengroba.scanneroption.WebAppInterface.JS_FUNCTION;
-import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN;
 import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN_IF_EMPTY;
 
 public class MainActivity extends AppCompatActivity {
@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private GoogleApiClient client;
     private long eventDuration;
     private int valorScan;
+    private int errorScan;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -113,6 +114,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 eventDuration = event.getEventTime() - event.getDownTime();
+                if(eventDuration > 500){
+                    utils.showKeyboard(MainActivity.this);
+                }
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                     WebView.HitTestResult hr = ((WebView) view).getHitTestResult();
@@ -122,13 +126,15 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "HitTestResult: getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
                     Log.d(TAG, "onTouch()eventDuration = " + eventDuration);
 
-                    if (hr.getType() == 9 && eventDuration > 500) {
-                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN);
-                    } else {
-
-                        //utils.hideKeyboard(MainActivity.this);
-
+                    if(eventDuration > 500){
+                        utils.showKeyboard(MainActivity.this);
+                    }else if (hr.getType() == 9 && eventDuration < 500) {
+                        utils.hideKeyboard(MainActivity.this);
                         webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
+                    } else if (hr.getType() == 0){
+                        utils.toggleKey(MainActivity.this);
+                    } else{
+
                     }
                 }
                 return false;
@@ -166,19 +172,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView webView, String url) {
                 super.onPageFinished(webView, url);
+                webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_LOAD_PAGE);
                 // Estado del teclado segun la pagina en la que estemos
                 imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 Log.d(TAG, "onPageFinished(): " + webView.getTitle());
 
-                switch (webView.getTitle()) {
-                    case "Opciones":
-                        imm.showSoftInput(webView, 0);
-                        break;
-                    case "Información de bloque":
-                        utils.hideKeyboard(MainActivity.this);
-                        break;
-                    default:
-                        break;
+                if (webView.getTitle().equals("Opciones")) {
+                    imm.showSoftInput(webView, 0);
+                }else if (webView.getTitle().equals("Información de bloque") && errorScan != 1) {
+                    utils.hideKeyboard(MainActivity.this);
+                } else {
+                    //utils.hideKeyboard(MainActivity.this);
                 }
             }
         });
@@ -273,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "onActivityResult" + scanContentResult);
             //String prueba = "1646265651114";
             if (scanResult.getContents() != null) {
+                errorScan = 0;
                 /*if (scanContentResult.length() != 13) {
                     Log.d(TAG, "Tonegenerator error beep");
                     beepTone(BEEP_ERROR);
@@ -293,11 +298,13 @@ public class MainActivity extends AppCompatActivity {
                 }*/
 
             } else {
+                errorScan = 1;
                 Log.d(TAG, "onActivityResult()Scanner cancelado");
                 //Opcion de borrado de valor al cancelar el escaneo (por defecto se mantiene el valor)
                 // UtilsKeys.clearKeys(webView);
-                utils.showKeyboard(MainActivity.this);
+                imm.showSoftInput(webView, 0);
                 //Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
+                //Opcion de habilitar el sonido
                 //beepTone(BEEP_ERROR);
                 //webInterface.textSpeech("No se ha obtenido ningun dato");
             }

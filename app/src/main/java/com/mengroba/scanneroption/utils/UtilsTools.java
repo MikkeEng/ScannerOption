@@ -52,7 +52,7 @@ public class UtilsTools {
         }
     }
 
-    public static void toggleKey(Activity activity){
+    public void toggleKey(final Activity activity){
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         if (imm.isActive()){
             imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
