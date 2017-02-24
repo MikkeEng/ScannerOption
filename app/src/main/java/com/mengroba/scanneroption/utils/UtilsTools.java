@@ -53,7 +53,7 @@ public class UtilsTools {
     }
 
     public void toggleKey(final Activity activity){
-        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         if (imm.isActive()){
             imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
         } else {
@@ -62,17 +62,12 @@ public class UtilsTools {
     }//end method
 
     public void hideKeyboard(final Activity activity){
-        final InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
     }
 
     public void showKeyboard(final Activity activity){
-        final InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(0, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
-    }
-
-    public static float dpToPx(Context context, float valueInDp) {
-        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
     }
 }

@@ -39,11 +39,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "var actElement = document.activeElement;" +
                     "for(var i = 0; i < listElementScanner.length; i++) {" +
                         "var elementScanner = listElementScanner[i];" +
-                        "console.log('name de elemento: ' + elementScanner.name);" +
-                        "console.log('elemento activo: ' + actElement);" +
-                        "console.log('valor de autocomplete antes: ' + actElement.autocomplete);" +
                         "elementScanner.autocomplete = 'off';" +
-                        "console.log('valor de autocomplete despues: ' + actElement.autocomplete);" +
                         "elementScanner.placeholder = 'Pulsa y escanea';" +
                     "}" +
                     "})()";
@@ -61,12 +57,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
             "})()";
     public static final String JS_START_SCAN_IF_EMPTY = JS_ELEMENT_SCANNER +
             "var elementValue = elementScanner.value;" +
-            "console.log('name de elemento: ' + elementScanner.name);" +
-            "console.log('elemento activo: ' + actElement);" +
-            "console.log('valor de elemento: ' + elementValue);" +
-            "console.log('valor de autocomplete: ' + actElement.autocomplete);" +
             "if(elementScanner === actElement && !elementValue){" +
-            "console.log('Activacion de escaner');" +
             "Android.startScan();" +
             "}" +
             "}" +
@@ -114,35 +105,6 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
     }
 
-    public static Map<String, List<String>> getParamsByUrl(String url) {
-        try {
-            Map<String, List<String>> params = new HashMap<String, List<String>>();
-            String[] urlParts = url.split("\\?");
-            if (urlParts.length > 1) {
-                String query = urlParts[1];
-                for (String param : query.split("&")) {
-                    String[] pair = param.split("=");
-                    String key = URLDecoder.decode(pair[0], "UTF-8");
-                    String value = "";
-                    if (pair.length > 1) {
-                        value = URLDecoder.decode(pair[1], "UTF-8");
-                    }
-
-                    List<String> values = params.get(key);
-                    if (values == null) {
-                        values = new ArrayList<String>();
-                        params.put(key, values);
-                    }
-                    values.add(value);
-                }
-            }
-
-            return params;
-        } catch (UnsupportedEncodingException ex) {
-            throw new AssertionError(ex);
-        }
-    }
-
     /**
      * Muestra un cuadro de dialogo del mensaje pasado por parametro en el HTML
      * @param msg
@@ -159,16 +121,6 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         });
         //Creamos el dialogo
         builder.create().show();
-    }
-
-    /**
-     * Metodo para pasar a voz un mensaje de texto
-     * @param msg
-     */
-    @JavascriptInterface
-    public void textSpeech(String msg) {
-        this.msg = msg;
-        tts = new TextToSpeech(context, this);
     }
 
     /**
@@ -197,8 +149,19 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         ((Activity)context).finish();
     }
 
+
+    /**
+     * Metodo para pasar a voz un mensaje de texto
+     * @param msg
+     */
+    @JavascriptInterface
+    public void textSpeech(String msg) {
+        this.msg = msg;
+        tts = new TextToSpeech(context, this);
+    }
+
     @Override
-    // OnInitListener method to receive the TTS engine status
+    // Metodo para recibir el estado del motor de TTS
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
             ttsOk = true;
@@ -211,8 +174,8 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         }
     }
 
-    // A method to speak something
-    @SuppressWarnings("deprecation") // Support older API levels too.
+    // Metodo de habla del TTS
+    @SuppressWarnings("deprecation")
     public void speak(String text, Boolean override) {
         if (ttsOk) {
             if (override) {
