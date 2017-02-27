@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         webView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
+                //TODO si el elemento tiene el class de html scanner entonces abrimos el scanner.
                 eventDuration = event.getEventTime() - event.getDownTime();
                 if(eventDuration > 500){
                     utils.showKeyboard(MainActivity.this);
@@ -147,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
             public void onFocusChange(View v, boolean hasFocus) {
                 Log.d(TAG, "onFocusChange(): " + v.getOnFocusChangeListener());
 
-                //TODO si el elemento tiene el class de html scanner entonces abrimos el scanner.
                 //el foco siempre se queda en el webview
                 if (hasFocus) {
                     Toast.makeText(getApplicationContext(), "Has Focus", Toast.LENGTH_SHORT).show();

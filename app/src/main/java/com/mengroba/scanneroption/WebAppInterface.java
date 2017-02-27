@@ -5,21 +5,19 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Message;
 import android.speech.tts.TextToSpeech;
-import android.view.KeyEvent;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
-import android.widget.Spinner;
 import android.widget.Toast;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+//SCANNER
+import co.kr.bluebird.ser.protocol.Reader;
+import co.kr.bluebird.ser.protocol.SDConsts;
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
+//LASER
+
 
 /**
  * Created by mengroba on 25/01/2017.
@@ -38,30 +36,45 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
             "var listElementScanner = document.querySelectorAll('.scanner');" +
                     "var actElement = document.activeElement;" +
                     "for(var i = 0; i < listElementScanner.length; i++) {" +
-                        "var elementScanner = listElementScanner[i];" +
-                        "elementScanner.autocomplete = 'off';" +
-                        "elementScanner.placeholder = 'Pulsa y escanea';" +
+                    "var elementScanner = listElementScanner[i];" +
+                    "elementScanner.autocomplete = 'off';" +
+                    "elementScanner.placeholder = 'Pulsa y escanea';" +
                     "}" +
                     "})()";
-
     public static final String JS_ELEMENT_SCANNER =
             "var listElementScanner = document.querySelectorAll('.scanner');" +
                     "var actElement = document.activeElement;" +
                     "for(var i = 0; i < listElementScanner.length; i++) {" +
                     "var elementScanner = listElementScanner[i];";
+    public static final String JS_ELEMENT_LASER =
+            "var listElementLaser = document.querySelectorAll('.laser');" +
+                    "var actElement = document.activeElement;" +
+                    "for(var i = 0; i < listElementLaser.length; i++) {" +
+                    "var elementLaser = listElementLaser[i];";
     public static final String JS_START_SCAN = JS_ELEMENT_SCANNER +
             "if(elementScanner === actElement){" +
             "Android.startScan();" +
             "}" +
             "}" +
             "})()";
-    public static final String JS_START_SCAN_IF_EMPTY = JS_ELEMENT_SCANNER +
-            "var elementValue = elementScanner.value;" +
-            "if(elementScanner === actElement && !elementValue){" +
-            "Android.startScan();" +
-            "}" +
-            "}" +
-            "})()";
+    public static final String JS_START_SCAN_IF_EMPTY =
+            JS_ELEMENT_SCANNER +
+                    "var elementValue = elementScanner.value;" +
+                    "if(elementScanner === actElement && !elementValue){" +
+                    "Android.startScan();" +
+                    "}" +
+                    "}" +
+                    "})()";
+    public static final String JS_START_LASER_IF_EMPTY =
+            JS_ELEMENT_SCANNER +
+                    "var lasertValue = elementLaser.value;" +
+                    "if(elementLaser === actElement && !lasertValue){" +
+                    "Android.startLaser();" +
+                    "}" +
+                    "}" +
+                    "})()";
+
+    private static final String TAG = "WebAppInterface";
 
     private Context context;
     private static final int STATE_SEARCH = 1;
@@ -72,6 +85,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     private TextToSpeech tts;
     private String msg;
     private Boolean ttsOk = true;
+    private Reader laserReader;
 
     /**
      * Constructor de la clase WebAppInterface
@@ -107,6 +121,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
 
     /**
      * Muestra un cuadro de dialogo del mensaje pasado por parametro en el HTML
+     *
      * @param msg
      */
     @JavascriptInterface
@@ -125,6 +140,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
 
     /**
      * Creamos un Toast con el mensaje pasado por parametro en el HTML     *
+     *
      * @param msg
      */
     @JavascriptInterface
@@ -145,13 +161,46 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     }
 
     @JavascriptInterface
-    public void finishWindow(){
-        ((Activity)context).finish();
+    public void finishWindow() {
+        ((Activity) context).finish();
+    }
+
+    @JavascriptInterface
+    public void startLaser() {
+        laserReader = Reader.getReader(context, laserHandler);
+        laserReader.BC_SetTriggerState(true);
+
     }
 
 
+    public Handler laserHandler = new Handler() {
+        public void handleMessage(Message m) {
+            Log.d(TAG, "laserHandler");
+            Log.d(TAG, "command = " + m.arg1 + " result = " + m.arg2 + " obj = data");
+
+            if (m.what == SDConsts.Msg.BCMsg) {
+                StringBuilder readData = new StringBuilder();
+                if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED)
+                    Toast.makeText(context, "LASER ACTIVADO", Toast.LENGTH_SHORT).show();
+                else if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED)
+                    Toast.makeText(context, "LASER DESACTIVADO", Toast.LENGTH_SHORT).show();
+                else if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_READ) {
+                    if (m.arg2 == SDConsts.BCResult.SUCCESS)
+                        readData.append(" " + "LASER LEYENDO CODIGO");
+                    else if (m.arg2 == SDConsts.BCResult.ACCESS_TIMEOUT)
+                        readData.append(" " + "TIEMPO DE ESPERA EXPIRADO");
+                    if (m.obj != null)
+                        readData.append("\n" + (String) m.obj);
+                    Toast.makeText(context, "\" \" + readData.toString()", Toast.LENGTH_SHORT).show();
+                }
+                Log.d(TAG, "RESULTADO = " + readData.toString());
+            }
+        }
+    };
+
     /**
      * Metodo para pasar a voz un mensaje de texto
+     *
      * @param msg
      */
     @JavascriptInterface
@@ -166,8 +215,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         if (status == TextToSpeech.SUCCESS) {
             ttsOk = true;
             speak(msg, true);
-        }
-        else {
+        } else {
             tts.stop();
             tts.shutdown();
             ttsOk = false;
@@ -180,8 +228,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         if (ttsOk) {
             if (override) {
                 tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-            }
-            else {
+            } else {
                 tts.speak(text, TextToSpeech.QUEUE_ADD, null);
             }
         }
