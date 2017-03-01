@@ -6,7 +6,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-feature android:name="android.hardware.usb.host"/>
+    <uses-feature android:name="android.hardware.usb.accessory" />
+    <uses-permission android:name="android.permission.SET_TIME_ZONE" />
 
     <application
         android:allowBackup="true"
@@ -20,12 +25,27 @@
             android:configChanges="orientation"
             android:screenOrientation="portrait">
             <intent-filter>
+                <action android:name="com.mengroba.scanneroption.laser.LASER_SCAN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+
+        <service android:name=".stopwatch.StopwatchService" />
+
+        <receiver android:name=".rfid.RFIDReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="kr.co.bluebird.android.sled.action.SLED_ATTACHED" />
+                <action android:name="kr.co.bluebird.android.sled.action.SLED_DETACHED" />
+            </intent-filter>
+        </receiver>
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

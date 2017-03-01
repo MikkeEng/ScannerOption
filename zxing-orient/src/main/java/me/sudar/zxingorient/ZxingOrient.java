@@ -235,7 +235,7 @@ public class ZxingOrient {
         }
     }
 
-    private void attachMoreExtras(Intent intent) {
+    public void attachMoreExtras(Intent intent) {
         for (Map.Entry<String, Object> entry : moreExtras.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();

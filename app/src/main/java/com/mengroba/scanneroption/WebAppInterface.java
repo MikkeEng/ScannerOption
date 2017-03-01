@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.speech.tts.TextToSpeech;
@@ -12,6 +13,12 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 //SCANNER
+import com.google.zxing.client.android.Intents;
+import com.mengroba.scanneroption.laser.LaserResult;
+import com.mengroba.scanneroption.laser.LaserScan;
+
+import java.util.Map;
+
 import co.kr.bluebird.ser.protocol.Reader;
 import co.kr.bluebird.ser.protocol.SDConsts;
 import me.sudar.zxingorient.Barcode;
@@ -34,12 +41,24 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     public static final String JS_FUNCTION = "function() {";
     public static final String JS_LOAD_PAGE =
             "var listElementScanner = document.querySelectorAll('.scanner');" +
+            "var listElementLaser = document.querySelectorAll('.laser');" +
                     "var actElement = document.activeElement;" +
-                    "for(var i = 0; i < listElementScanner.length; i++) {" +
-                    "var elementScanner = listElementScanner[i];" +
-                    "elementScanner.autocomplete = 'off';" +
-                    "elementScanner.placeholder = 'Pulsa y escanea';" +
-                    "}" +
+                        "for(var i = 0; i < listElementScanner.length; i++) {" +
+                            "var elementScanner = listElementScanner[i];" +
+                            "console.log('name de elemento: ' + elementScanner.name);" +
+                            "console.log('elemento activo: ' + actElement);" +
+                            "console.log('valor de autocomplete antes: ' + actElement.autocomplete);" +
+                            "elementScanner.autocomplete = 'off';" +
+                            "console.log('valor de autocomplete despues: ' + actElement.autocomplete);" +
+                            "elementScanner.placeholder = 'Pulsa y escanea';" +
+                        "}" +
+                        "for(var i = 0; i < listElementLaser.length; i++) {" +
+                            "var elementLaser = listElementLaser[i];" +
+                            "console.log('elementLaser: ' + elementLaser);" +
+                            "elementLaser.autocomplete = 'off';" +
+                            "console.log('valor de autocomplete laser: ' + actElement.autocomplete);" +
+                            "elementLaser.placeholder = 'Pulsa para laser';" +
+                        "}" +
                     "})()";
     public static final String JS_ELEMENT_SCANNER =
             "var listElementScanner = document.querySelectorAll('.scanner');" +
@@ -66,8 +85,10 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "}" +
                     "})()";
     public static final String JS_START_LASER_IF_EMPTY =
-            JS_ELEMENT_SCANNER +
+            JS_ELEMENT_LASER +
                     "var lasertValue = elementLaser.value;" +
+                    "console.log('elementLaser: ' + elementLaser);" +
+                    "console.log('lasertValue: ' + lasertValue);" +
                     "if(elementLaser === actElement && !lasertValue){" +
                     "Android.startLaser();" +
                     "}" +
@@ -75,8 +96,12 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "})()";
 
     private static final String TAG = "WebAppInterface";
+    private static final String MY_PACKAGE = "com.mengroba.scanneroption.laser";
+
+    public static final int REQUEST_CODE = 50;
 
     private Context context;
+    private Activity activity;
     private static final int STATE_SEARCH = 1;
     private static final int STATE_SCAN = 3;
     private static final int STATE_CAMERA = 4;
@@ -85,6 +110,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     private TextToSpeech tts;
     private String msg;
     private Boolean ttsOk = true;
+    private LaserScan laserScan;
     private Reader laserReader;
 
     /**
@@ -117,6 +143,12 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         scanner.setInfo("Pulsa ATRÁS para cancelar");
         scanner.setInfoBoxColor("#1c1c1c");
         scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
+    }
+
+    @JavascriptInterface
+    public void startLaser() {
+        laserScan = new LaserScan((Activity) context);
+        laserScan.startLaserScan();
     }
 
     /**
@@ -164,39 +196,6 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     public void finishWindow() {
         ((Activity) context).finish();
     }
-
-    @JavascriptInterface
-    public void startLaser() {
-        laserReader = Reader.getReader(context, laserHandler);
-        laserReader.BC_SetTriggerState(true);
-
-    }
-
-
-    public Handler laserHandler = new Handler() {
-        public void handleMessage(Message m) {
-            Log.d(TAG, "laserHandler");
-            Log.d(TAG, "command = " + m.arg1 + " result = " + m.arg2 + " obj = data");
-
-            if (m.what == SDConsts.Msg.BCMsg) {
-                StringBuilder readData = new StringBuilder();
-                if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED)
-                    Toast.makeText(context, "LASER ACTIVADO", Toast.LENGTH_SHORT).show();
-                else if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED)
-                    Toast.makeText(context, "LASER DESACTIVADO", Toast.LENGTH_SHORT).show();
-                else if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_READ) {
-                    if (m.arg2 == SDConsts.BCResult.SUCCESS)
-                        readData.append(" " + "LASER LEYENDO CODIGO");
-                    else if (m.arg2 == SDConsts.BCResult.ACCESS_TIMEOUT)
-                        readData.append(" " + "TIEMPO DE ESPERA EXPIRADO");
-                    if (m.obj != null)
-                        readData.append("\n" + (String) m.obj);
-                    Toast.makeText(context, "\" \" + readData.toString()", Toast.LENGTH_SHORT).show();
-                }
-                Log.d(TAG, "RESULTADO = " + readData.toString());
-            }
-        }
-    };
 
     /**
      * Metodo para pasar a voz un mensaje de texto

@@ -1,14 +1,18 @@
 package com.mengroba.scanneroption;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
@@ -21,9 +25,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.mengroba.scanneroption.laser.LaserResult;
+import com.mengroba.scanneroption.laser.LaserScan;
+import com.mengroba.scanneroption.rfid.RFIDReceiver;
 import com.mengroba.scanneroption.utils.UtilsKeys;
 import com.mengroba.scanneroption.utils.UtilsTools;
 
+import co.kr.bluebird.ser.protocol.Reader;
+import co.kr.bluebird.ser.protocol.SDConsts;
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
 import me.sudar.zxingorient.ZxingOrientResult;
@@ -31,6 +40,7 @@ import me.sudar.zxingorient.ZxingOrientResult;
 import static com.mengroba.scanneroption.WebAppInterface.JS_LOAD_PAGE;
 import static com.mengroba.scanneroption.WebAppInterface.JS_JAVASCRIPT;
 import static com.mengroba.scanneroption.WebAppInterface.JS_FUNCTION;
+import static com.mengroba.scanneroption.WebAppInterface.JS_START_LASER_IF_EMPTY;
 import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN_IF_EMPTY;
 
 public class MainActivity extends AppCompatActivity {
@@ -47,11 +57,13 @@ public class MainActivity extends AppCompatActivity {
     //Scanner
     private ZxingOrient scanner;
     private String scanContentResult;
-    private String scanFormatResult;
+    private String laserContentResult;
+    private BroadcastReceiver receiver = new RFIDReceiver();
     //Elementos HTML
     private WebAppInterface wItf;
 
     private static final int BARCODE_RESULTCODE = 100;
+    private static final int LASER_RESULTCODE = 50;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -132,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
                     }else if (hr.getType() == 9 && eventDuration < 500) {
                         utils.hideKeyboard(MainActivity.this);
                         webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
+                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_LASER_IF_EMPTY);
                     } else if (hr.getType() == 0){
                         utils.toggleKey(MainActivity.this);
                     } else{
@@ -271,32 +284,16 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == BARCODE_RESULTCODE) {
             //Cargamos la libreria Zxing a traves de scanResult y parseamos el resultado
             ZxingOrientResult scanResult = ZxingOrient.parseActivityResult(requestCode, resultCode, intent);
-            scanFormatResult = scanResult.getFormatName();
+            //scanFormatResult = scanResult.getFormatName();
             scanContentResult = scanResult.getContents();
-            Log.i(TAG, "onActivityResult" + scanFormatResult);
+            //Log.i(TAG, "onActivityResult" + scanFormatResult);
             Log.i(TAG, "onActivityResult" + scanContentResult);
-            //String prueba = "1646265651114";
             if (scanResult.getContents() != null) {
                 errorScan = 0;
-                /*if (scanContentResult.length() != 13) {
-                    Log.d(TAG, "Tonegenerator error beep");
-                    beepTone(BEEP_ERROR);
-                    //webInterface.textSpeech("El codigo no es correcto");
-                }*/
                 Log.d(TAG, "onActivityResult(): no es nulo");
-                // Cuando se escanea como el foco lo tiene el elemento se simulan keypresseds
+                // Cuando se escanea como el foco lo tiene el elemento se simulan keypresets
                 UtilsKeys.clearKeys(webView);
                 UtilsKeys.loadKeys(webView, scanContentResult);
-                /*if (scanContentResult.equals(prueba)) {
-                    Log.d(TAG, "onActivityResult(): valores coincidentes");
-                    //beepTone(BEEP_OK);
-                    //Toast.makeText(this, "El codigo es correcto.", Toast.LENGTH_LONG).show();
-
-                } else {
-                    Log.d(TAG, "onActivityResult(): valores no coincidentes");
-                    Toast.makeText(this, "Error en el codigo. Vuelve a intentarlo.", Toast.LENGTH_LONG).show();
-                }*/
-
             } else {
                 errorScan = 1;
                 Log.d(TAG, "onActivityResult()Scanner cancelado");
@@ -308,7 +305,30 @@ public class MainActivity extends AppCompatActivity {
                 //beepTone(BEEP_ERROR);
                 //webInterface.textSpeech("No se ha obtenido ningun dato");
             }
+        } else if(requestCode == LASER_RESULTCODE){
+            //Cargamos el laser con los resultados de laserResult y parseamos el resultado
+            LaserResult laserResult = LaserScan.parseActivityResult(requestCode, resultCode, intent);
+            laserContentResult = laserResult.getLaserContents();
+            Log.i(TAG, "onActivityResult" + laserContentResult);
+            if (laserResult.getLaserContents() != null) {
+                errorScan = 0;
+                Log.d(TAG, "onActivityResult(): no es nulo");
+                // Cuando se escanea como el foco lo tiene el elemento se simulan keypresets
+                UtilsKeys.clearKeys(webView);
+                UtilsKeys.loadKeys(webView, laserContentResult);
+            } else {
+                errorScan = 1;
+                Log.d(TAG, "onActivityResult()Scanner cancelado");
+                imm.showSoftInput(webView, 0);
+            }
+
         }
+    }
+
+    @Override
+    protected void onStop() {
+        //this.unregisterReceiver(receiver);
+        super.onStop();
     }
 
     /**
