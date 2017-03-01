@@ -79,7 +79,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     public static final String JS_START_SCAN_IF_EMPTY =
             JS_ELEMENT_SCANNER +
                     "var elementValue = elementScanner.value;" +
-                    "if(elementScanner === actElement && !elementValue){" +
+                    "if(elementScanner == actElement && !elementValue){" +
                     "Android.startScan();" +
                     "}" +
                     "}" +
@@ -147,7 +147,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
 
     @JavascriptInterface
     public void startLaser() {
-        laserScan = new LaserScan((Activity) context);
+        laserScan = new LaserScan(context);
         laserScan.startLaserScan();
     }
 

@@ -2,20 +2,12 @@ package com.mengroba.scanneroption.laser;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.mengroba.scanneroption.MainActivity;
-
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
+import com.mengroba.scanneroption.WebAppInterface;
 
 import co.kr.bluebird.ser.protocol.Reader;
 import co.kr.bluebird.ser.protocol.SDConsts;
@@ -31,22 +23,19 @@ public class LaserScan {
     private Context context;
     public static final int REQUEST_CODE = 50;
 
-    private final Activity activity;
-    private final android.app.Fragment fragment;
-    private final android.support.v4.app.Fragment supportFragment;
-    private Reader laserReader;
-    private final Map<String, Object> moreExtras = new HashMap<String, Object>(1);
+    private WebAppInterface webInterface;
+    private Reader barcodeReader;
+    private Handler barcodeHandler;
 
 
-    public LaserScan(Activity activity) {
-        this.activity = activity;
-        this.fragment = null;
-        this.supportFragment = null;
+    public LaserScan(Context context) {
+        this.context = context;
     }
 
     public void startLaserScan() {
 
-        Handler laserHandler = new Handler() {
+        webInterface = new WebAppInterface(context);
+        barcodeHandler = new Handler() {
             public void handleMessage(Message m) {
                 Log.d(TAG, "laserHandler");
                 Log.d(TAG, "command = " + m.arg1 + " result = " + m.arg2 + " obj = data");
@@ -72,32 +61,17 @@ public class LaserScan {
                             Log.d(TAG, "startLaserScan(): Resultado: " + code);
                             //initLaser(code);
                             //Pasamos la informacion al usuario, para ello usamos un dialogo emergente
-                            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(activity);
-                            builder
-                                    .setMessage("El codigo es: " + code)
-                                    .setNeutralButton("Aceptar", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            //Creamos el dialogo
-                            builder.create().show();
+                            webInterface.showDialog("Codigo capturado: " + code);
                         }
-
                     }
                     Log.d(TAG, "RESULTADO = " + readData.toString());
                 }
             }
         };
-        laserReader = Reader.getReader(activity, laserHandler);
-        boolean openResult = laserReader.RF_Open();
-        if (openResult == SDConsts.RF_OPEN_SUCCESS) {
-            Log.d(TAG, "Lector abierto");
-        } else if (openResult == SDConsts.RF_OPEN_FAIL)
-            Log.e(TAG, "Apertura de lector fallida");
 
-        laserReader.BC_SetTriggerState(true);
+        barcodeReader = Reader.getReader(context, barcodeHandler);
+
+        //barcodeReader.BC_SetTriggerState(true);
     }
 
     public void initLaser(String value) {
@@ -106,47 +80,13 @@ public class LaserScan {
         intentLaser.putExtra("Codigo", value);
         intentLaser.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intentLaser.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        //attachMoreExtras(intentLaser);
-        if (value != null) {
-            activity.setResult(Activity.RESULT_OK, intentLaser);
-        }
         startActivityForResult(intentLaser, REQUEST_CODE); //Are you missing a call to unregisterReceiver()?
     }
 
     protected void startActivityForResult(Intent intent, int code) {
-        if (fragment == null && supportFragment == null) {
-            activity.startActivityForResult(intent, code);
-            //TODO: unregisterReceiver()?
-        } else if (supportFragment == null) {
-            fragment.startActivityForResult(intent, code);
-        } else if (fragment == null) {
-            supportFragment.startActivityForResult(intent, code);
-        }
+        Activity activity = (Activity) context;
+        activity.startActivityForResult(intent, code);
     }
-
-    public void attachMoreExtras(Intent intent) {
-        for (Map.Entry<String, Object> entry : moreExtras.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            // Kind of hacky
-            if (value instanceof Integer) {
-                intent.putExtra(key, (Integer) value);
-            } else if (value instanceof Long) {
-                intent.putExtra(key, (Long) value);
-            } else if (value instanceof Boolean) {
-                intent.putExtra(key, (Boolean) value);
-            } else if (value instanceof Double) {
-                intent.putExtra(key, (Double) value);
-            } else if (value instanceof Float) {
-                intent.putExtra(key, (Float) value);
-            } else if (value instanceof Bundle) {
-                intent.putExtra(key, (Bundle) value);
-            } else {
-                intent.putExtra(key, value.toString());
-            }
-        }
-    }
-
 
     public static LaserResult parseActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_CODE) {

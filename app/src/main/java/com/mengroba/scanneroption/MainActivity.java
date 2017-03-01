@@ -49,6 +49,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String WEB_LOCAL =
             "file:///android_asset/main_menu.html";
 
+    public static final int MSG_OPTION_DISCONNECTED = 0;
+
+    public static final int MSG_OPTION_CONNECTED = 1;
+
     private UtilsTools utils;
 
     public WebView webView;
@@ -72,6 +76,9 @@ public class MainActivity extends AppCompatActivity {
     private long eventDuration;
     private int valorScan;
     private int errorScan;
+    private Reader laserReader;
+    private Reader mainReader;
+    private boolean mIsConnected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -326,10 +333,95 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        // TODO Auto-generated method stub
+        Log.d(TAG, " onStart");
+        super.onStart();
+    }
+
+    @Override
+    public void onPause() {
+        // TODO Auto-generated method stub
+        Log.d(TAG, " onPause");
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        mainReader = Reader.getReader(this, mainHandler);
+        if (mainReader.SD_GetChargeState() == SDConsts.SDConnectState.CONNECTED) {
+            mainReader.SD_Disconnect();
+        }
+        mainReader.RF_Close();
+        super.onPause();
+    }
+
+    @Override
     protected void onStop() {
-        //this.unregisterReceiver(receiver);
+        Log.d(TAG, " onStop");
+
         super.onStop();
     }
+
+    @Override
+    public void onDestroy() {
+        // TODO Auto-generated method stub
+        Log.d(TAG, " onDestroy");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onResume() {
+        // TODO Auto-generated method stub
+        Log.d(TAG, "onResume");
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        mainReader = Reader.getReader(this, mainHandler);
+        boolean openResult = false;
+        openResult = mainReader.RF_Open();
+        if (openResult == SDConsts.RF_OPEN_SUCCESS) {
+            Log.i(TAG, "Reader opened");
+        }
+        else if (openResult == SDConsts.RF_OPEN_FAIL)
+            Log.e(TAG, "Reader open failed");
+
+        super.onResume();
+    }
+
+    public Handler mainHandler = new Handler() {
+        public void handleMessage(Message m) {
+            Log.d(TAG, "mainHandler");
+            Log.d(TAG, "Resultados = " + m.arg1 + " result = " + m.arg2 + " obj = data");
+            switch (m.what) {
+                case SDConsts.Msg.SDMsg:
+                    break;
+                case SDConsts.Msg.RFMsg:
+                    break;
+                case SDConsts.Msg.BCMsg:
+                    break;
+            }
+        }
+    };
+
+    public Handler laserHandler = new Handler() {
+        public void handleMessage(Message m) {
+            Log.d(TAG, "mConnectivityHandler");
+            Log.d(TAG, "command = " + m.arg1 + " result = " + m.arg2 + " obj = data");
+
+            switch (m.what) {
+                case SDConsts.Msg.SDMsg:
+                    if (m.arg1 == SDConsts.SDCmdMsg.SLED_WAKEUP) {
+                        if (m.arg2 == SDConsts.SDResult.SUCCESS) {
+                            Log.d(TAG, "SLED conectado");
+                            laserReader.SD_Connect();
+                        }
+                        else
+                            Log.d(TAG, "Fallo en SLED");
+                    }
+                    else if (m.arg1 == SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED) {
+                        Log.d(TAG, "SLED desconectado");
+                    }
+                    break;
+            }
+        }
+    };
 
     /**
      * Sobreescribimos el metodo de boton vuelta atras para que vaya a la anterior pagina visitada
