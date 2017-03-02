@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ScannerOption.iml" filepath="$PROJECT_DIR$/ScannerOption.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/zxing-orient/zxing-orient.iml" filepath="$PROJECT_DIR$/zxing-orient/zxing-orient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/zxing-portrait/zxing-portrait.iml" filepath="$PROJECT_DIR$/zxing-portrait/zxing-portrait.iml" />
     </modules>
   </component>
 </project>

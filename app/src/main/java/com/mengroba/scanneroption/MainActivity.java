@@ -279,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                 //Opcion de borrado de valor al cancelar el escaneo (por defecto se mantiene el valor)
                 // UtilsKeys.clearKeys(webView);
                 imm.showSoftInput(webView, 0);
-                //Toast.makeText(this, "No se ha obtenido ningun dato", Toast.LENGTH_SHORT).show();
+                webInterface.makeToastAndroid("No se ha obtenido ningún dato");
                 //Opcion de habilitar el sonido
                 //beepTone(BEEP_ERROR);
                 //webInterface.textSpeech("No se ha obtenido ningun dato");

@@ -1,1 +1,1 @@
-include ':app', ':zxing-orient'
+include ':app', ':zxing-portrait'
