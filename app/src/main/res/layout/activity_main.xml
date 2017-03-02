@@ -6,11 +6,24 @@
     android:layout_height="match_parent"
     tools:context="com.mengroba.scanneroption.MainActivity">
 
+    <Button
+        android:text="BLUEBIRD ON"
+        android:textColor="@android:color/holo_green_dark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="25dp"
+        android:visibility="visible"
+        android:id="@+id/btn_bluebird" />
+
     <WebView
         android:id="@+id/webView1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:focusable="true" />
+        android:focusable="true" >
+
+    </WebView>
 
     <ProgressBar
         android:id="@+id/progressbar"
