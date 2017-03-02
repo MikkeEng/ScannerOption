@@ -7,8 +7,8 @@ android {
         applicationId "com.mengroba.scanneroption"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 202
-        versionName "2.0.2"
+        versionCode 22
+        versionName "2.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

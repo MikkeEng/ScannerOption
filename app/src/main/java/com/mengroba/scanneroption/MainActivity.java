@@ -1,7 +1,6 @@
 package com.mengroba.scanneroption;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -25,22 +24,17 @@ import android.widget.Toast;
 
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.mengroba.scanneroption.laser.LaserResult;
-import com.mengroba.scanneroption.laser.LaserScan;
-import com.mengroba.scanneroption.rfid.RFIDReceiver;
 import com.mengroba.scanneroption.utils.UtilsKeys;
 import com.mengroba.scanneroption.utils.UtilsTools;
 
 import co.kr.bluebird.ser.protocol.Reader;
 import co.kr.bluebird.ser.protocol.SDConsts;
-import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
 import me.sudar.zxingorient.ZxingOrientResult;
 
 import static com.mengroba.scanneroption.WebAppInterface.JS_LOAD_PAGE;
 import static com.mengroba.scanneroption.WebAppInterface.JS_JAVASCRIPT;
 import static com.mengroba.scanneroption.WebAppInterface.JS_FUNCTION;
-import static com.mengroba.scanneroption.WebAppInterface.JS_START_LASER_IF_EMPTY;
 import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN_IF_EMPTY;
 
 public class MainActivity extends AppCompatActivity {
@@ -48,10 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String WEB_LOCAL =
             "file:///android_asset/main_menu.html";
-
-    public static final int MSG_OPTION_DISCONNECTED = 0;
-
-    public static final int MSG_OPTION_CONNECTED = 1;
 
     private UtilsTools utils;
 
@@ -61,37 +51,31 @@ public class MainActivity extends AppCompatActivity {
     //Scanner
     private ZxingOrient scanner;
     private String scanContentResult;
-    private String laserContentResult;
-    private BroadcastReceiver receiver = new RFIDReceiver();
     //Elementos HTML
-    private WebAppInterface wItf;
+    private WebAppInterface webInterface;
 
     private static final int BARCODE_RESULTCODE = 100;
-    private static final int LASER_RESULTCODE = 50;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
     private long eventDuration;
-    private int valorScan;
     private int errorScan;
     private Reader laserReader;
-    private Reader mainReader;
-    private boolean mIsConnected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
-        wItf = new WebAppInterface(this);
         utils = new UtilsTools(this);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         //definimos el visor HTML
         createWebView(this);
         // creamos el visor HTML
         startWebView();
+        webInterface = new WebAppInterface(this);
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -108,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
         WebSettings settings = webView.getSettings();
         //Enlazamos WebAppInterface entre el codigo JavaScript y el codigo Android
-        webView.addJavascriptInterface(new WebAppInterface(this), "Android");
+        webView.addJavascriptInterface(new WebAppInterface(this, webView), "Android");
         //Accedemos a la configuracion del WebView y habilitamos el javascript
         settings.setJavaScriptEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
@@ -134,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View view, MotionEvent event) {
                 //TODO si el elemento tiene el class de html scanner entonces abrimos el scanner.
                 eventDuration = event.getEventTime() - event.getDownTime();
-                if(eventDuration > 500){
+                if (eventDuration > 500) {
                     utils.showKeyboard(MainActivity.this);
                 }
 
@@ -146,15 +130,13 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "HitTestResult: getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
                     Log.d(TAG, "onTouch()eventDuration = " + eventDuration);
 
-                    if(eventDuration > 500){
+                    if (eventDuration > 500) {
                         utils.showKeyboard(MainActivity.this);
-                    }else if (hr.getType() == 9 && eventDuration < 500) {
+                    } else if (hr.getType() == 9 && eventDuration < 500) {
                         utils.hideKeyboard(MainActivity.this);
-                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
-                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_LASER_IF_EMPTY);
-                    } else if (hr.getType() == 0){
+                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);                    } else if (hr.getType() == 0) {
                         utils.toggleKey(MainActivity.this);
-                    } else{
+                    } else {
 
                     }
                 }
@@ -199,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (webView.getTitle().equals("Opciones")) {
                     imm.showSoftInput(webView, 0);
-                }else if (webView.getTitle().equals("Información de bloque") && errorScan != 1) {
+                } else if (webView.getTitle().equals("Información de bloque") && errorScan != 1) {
                     utils.hideKeyboard(MainActivity.this);
                 } else {
                     //utils.hideKeyboard(MainActivity.this);
@@ -266,16 +248,6 @@ public class MainActivity extends AppCompatActivity {
 
     } //Fin de startWebView()
 
-    private void startScanMain() {
-        //Creamos el scanner
-        scanner = new ZxingOrient(MainActivity.this);
-        scanner.setToolbarColor("#1c1c1c");
-        scanner.setIcon(R.drawable.ic_barcode_scan);
-        scanner.setInfo("Pulsa ATRÁS para cancelar");
-        scanner.setInfoBoxColor("#1c1c1c");
-        scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
-    }
-
     /**
      * Metodo ejecutado con el resultado del {@link Activity#startActivityForResult}, segun su utilizacion
      *
@@ -312,23 +284,8 @@ public class MainActivity extends AppCompatActivity {
                 //beepTone(BEEP_ERROR);
                 //webInterface.textSpeech("No se ha obtenido ningun dato");
             }
-        } else if(requestCode == LASER_RESULTCODE){
-            //Cargamos el laser con los resultados de laserResult y parseamos el resultado
-            LaserResult laserResult = LaserScan.parseActivityResult(requestCode, resultCode, intent);
-            laserContentResult = laserResult.getLaserContents();
-            Log.i(TAG, "onActivityResult" + laserContentResult);
-            if (laserResult.getLaserContents() != null) {
-                errorScan = 0;
-                Log.d(TAG, "onActivityResult(): no es nulo");
-                // Cuando se escanea como el foco lo tiene el elemento se simulan keypresets
-                UtilsKeys.clearKeys(webView);
-                UtilsKeys.loadKeys(webView, laserContentResult);
-            } else {
-                errorScan = 1;
-                Log.d(TAG, "onActivityResult()Scanner cancelado");
-                imm.showSoftInput(webView, 0);
-            }
-
+        } else {
+            webInterface.showDialog("No se detectó ningún valor");
         }
     }
 
@@ -345,11 +302,11 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, " onPause");
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        mainReader = Reader.getReader(this, mainHandler);
-        if (mainReader.SD_GetChargeState() == SDConsts.SDConnectState.CONNECTED) {
-            mainReader.SD_Disconnect();
+        laserReader = Reader.getReader(this, laserHandler);
+        if (laserReader.SD_GetChargeState() == SDConsts.SDConnectState.CONNECTED) {
+            laserReader.SD_Disconnect();
         }
-        mainReader.RF_Close();
+        laserReader.RF_Close();
         super.onPause();
     }
 
@@ -373,36 +330,22 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onResume");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        mainReader = Reader.getReader(this, mainHandler);
+        laserReader = Reader.getReader(this, laserHandler);
         boolean openResult = false;
-        openResult = mainReader.RF_Open();
+        openResult = laserReader.RF_Open();
         if (openResult == SDConsts.RF_OPEN_SUCCESS) {
             Log.i(TAG, "Reader opened");
-        }
-        else if (openResult == SDConsts.RF_OPEN_FAIL)
+            laserReader = Reader.getReader(this, laserHandler);
+            laserReader.SD_Wakeup();
+        } else if (openResult == SDConsts.RF_OPEN_FAIL)
             Log.e(TAG, "Reader open failed");
 
         super.onResume();
     }
 
-    public Handler mainHandler = new Handler() {
-        public void handleMessage(Message m) {
-            Log.d(TAG, "mainHandler");
-            Log.d(TAG, "Resultados = " + m.arg1 + " result = " + m.arg2 + " obj = data");
-            switch (m.what) {
-                case SDConsts.Msg.SDMsg:
-                    break;
-                case SDConsts.Msg.RFMsg:
-                    break;
-                case SDConsts.Msg.BCMsg:
-                    break;
-            }
-        }
-    };
-
     public Handler laserHandler = new Handler() {
         public void handleMessage(Message m) {
-            Log.d(TAG, "mConnectivityHandler");
+            Log.d(TAG, "laserHandler");
             Log.d(TAG, "command = " + m.arg1 + " result = " + m.arg2 + " obj = data");
 
             switch (m.what) {
@@ -411,12 +354,45 @@ public class MainActivity extends AppCompatActivity {
                         if (m.arg2 == SDConsts.SDResult.SUCCESS) {
                             Log.d(TAG, "SLED conectado");
                             laserReader.SD_Connect();
-                        }
-                        else
+                        } else
                             Log.d(TAG, "Fallo en SLED");
-                    }
-                    else if (m.arg1 == SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED) {
+                        laserReader.SD_Disconnect();
+                    } else if (m.arg1 == SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED) {
                         Log.d(TAG, "SLED desconectado");
+                        laserReader.SD_Disconnect();
+                    }
+                    break;
+                case SDConsts.Msg.BCMsg:
+                    StringBuilder readData = new StringBuilder();
+                    if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED)
+                        Log.d(TAG, "startLaserScan(): Laser activado");
+                        //Toast.makeText(context, "LASER ACTIVADO", Toast.LENGTH_SHORT).show();
+                    else if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED)
+                        Log.d(TAG, "startLaserScan(): Laser desactivado");
+                        //Toast.makeText(context, "LASER DESACTIVADO", Toast.LENGTH_SHORT).show();
+                    else if (m.arg1 == SDConsts.BCCmdMsg.BARCODE_READ) {
+                        if (m.arg2 == SDConsts.BCResult.SUCCESS)
+                            Log.d(TAG, "startLaserScan(): Laser leyendo");
+                            //Toast.makeText(context, "LASER LEYENDO CODIGO", Toast.LENGTH_SHORT).show();
+                        else if (m.arg2 == SDConsts.BCResult.ACCESS_TIMEOUT)
+                            Log.d(TAG, "startLaserScan(): Laser expirado");
+                        //Toast.makeText(context, "TIEMPO DE ESPERA EXPIRADO", Toast.LENGTH_SHORT).show();
+                        if (m.obj != null) {
+                            String resultFull = readData.append((String) m.obj).toString();
+                            String code = resultFull.substring(0, resultFull.indexOf(";"));
+                            Log.d(TAG, "startLaserScan(): Resultado: " + code);
+                            Log.i(TAG, "onActivityResult: " + code);
+                            if (code != null) {
+                                Log.d(TAG, "startLaserScan(): valor no nulo");
+                                UtilsKeys.clearKeys(webView);
+                                UtilsKeys.loadKeys(webView, code);
+                            } else {
+                                Log.d(TAG, "laserCodeKey() no hay codigo laser");
+                                webInterface.showDialog("No se ha detectado ningún valor");
+                            }
+                            //Pasamos la informacion al usuario, para ello usamos un dialogo emergente
+                            //webInterface.showDialog("Codigo capturado: " + code);
+                        }
                     }
                     break;
             }
