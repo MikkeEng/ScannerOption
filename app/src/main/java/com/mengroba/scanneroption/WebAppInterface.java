@@ -23,7 +23,7 @@ import me.sudar.zxingorient.ZxingOrient;
  */
 public class WebAppInterface implements TextToSpeech.OnInitListener {
 
-    //JS//
+    //Codigo JS//
     public static final String JS_JAVASCRIPT = "javascript:(";
     public static final String JS_FUNCTION = "function() {";
     public static final String JS_LOAD_PAGE =
@@ -32,11 +32,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "var actElement = document.activeElement;" +
                         "for(var i = 0; i < listElementScanner.length; i++) {" +
                             "var elementScanner = listElementScanner[i];" +
-                            "console.log('name de elemento: ' + elementScanner.name);" +
-                            "console.log('elemento activo: ' + actElement);" +
-                            "console.log('valor de autocomplete antes: ' + actElement.autocomplete);" +
                             "elementScanner.autocomplete = 'off';" +
-                            "console.log('valor de autocomplete despues: ' + actElement.autocomplete);" +
                             "elementScanner.placeholder = 'Pulsa y escanea';" +
                         "}" +
                     "})()";
@@ -47,11 +43,11 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "var elementScanner = listElementScanner[i];";
     public static final String JS_START_SCAN_IF_EMPTY =
             JS_ELEMENT_SCANNER +
-                    "var elementValue = elementScanner.value;" +
-                    "if(elementScanner == actElement && !elementValue){" +
-                    "Android.startScan();" +
-                    "}" +
-                    "}" +
+                        "var elementValue = elementScanner.value;" +
+                            "if(elementScanner == actElement && !elementValue){" +
+                                "Android.startScan();" +
+                            "}" +
+                        "}" +
                     "})()";
 
     private static final String TAG = "WebAppInterface";
@@ -66,22 +62,15 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     private String msg;
     private Boolean ttsOk = true;
 
-    /**
-     * Constructor de la clase WebAppInterface
-     *
-     * @param context
-     */
     public WebAppInterface(Context context) {
         this.context = context;
     }
+
     public WebAppInterface(Context context, WebView webView) {
         this.context = context;
         this.webView = webView;
     }
 
-    /**
-     * Accedemos al modulo de apertura de camara
-     */
     @JavascriptInterface
     public void openCameraFile() {
         //Pasamos a MainActivity el estado correspondiente a captura de camara

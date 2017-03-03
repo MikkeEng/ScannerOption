@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.hardware.Camera;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -24,8 +27,6 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.mengroba.scanneroption.handler.LaserHandler;
 import com.mengroba.scanneroption.utils.UtilsKeys;
 import com.mengroba.scanneroption.utils.UtilsTools;
 
@@ -39,53 +40,47 @@ import static com.mengroba.scanneroption.WebAppInterface.JS_JAVASCRIPT;
 import static com.mengroba.scanneroption.WebAppInterface.JS_FUNCTION;
 import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN_IF_EMPTY;
 
+/**
+ * Created by mengroba on 24/01/2017.
+ */
+
 public class MainActivity extends AppCompatActivity {
 
     //DECLARACIONES
     private static final String TAG = "MainActivity";
     private static final String WEB_LOCAL =
             "file:///android_asset/main_menu.html";
-
-    private UtilsTools utils;
-
-    private Button bluebird_btn;
-    public WebView webView;
-    private ProgressBar progressBar;
-    private InputMethodManager imm;
-    //Scanner
-    private ZxingOrient scanner;
-    private String scanContentResult;
-    private int arg1;
-    private int arg2;
-    private String msg_btn;
-    private int res;
-    //Elementos HTML
-    private WebAppInterface webInterface;
-
     private static final int BARCODE_RESULTCODE = 100;
 
-    private long eventDuration;
+    private UtilsTools utils;
+    private InputMethodManager imm;
+    private Button bluebird_btn;
+    //Scanner
+    private String scanContentResult;
     private int errorScan;
     private Reader laserReader;
-    private LaserHandler mainLaserHandler;
+    private int arg1;
+    private int arg2;
+    private int res;
+    //Elementos HTML
+    public WebView webView;
+    private WebAppInterface webInterface;
+    private ProgressBar progressBar;
+    private long eventDuration;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //fijamos el layout a utilizar
         setContentView(R.layout.activity_main);
+        webInterface = new WebAppInterface(this);
         utils = new UtilsTools(this);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         //definimos el visor HTML
         createWebView(this);
         // creamos el visor HTML
         startWebView();
-        webInterface = new WebAppInterface(this);
-        mainLaserHandler = new LaserHandler(this, webView);
-
 
         bluebird_btn = (Button) findViewById(R.id.btn_bluebird);
-
         bluebird_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Log.d(TAG, "bluebird_btn.arg1: " + arg1);
@@ -98,13 +93,14 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "bluebird_btn.SD_Disconnect: " + res);
                     } else {
                         bluebird_btn.setText("SLED ON");
-                        bluebird_btn.setTextColor(Color.GREEN);
+                        //bluebird_btn.setTextColor(Color.GREEN);
                         res = laserReader.SD_Wakeup();
                         Log.d(TAG, "bluebird_btn.SD_Wakeup: " + res);
                     }
                 } else {
-                    mainLaserHandler = new LaserHandler(getApplicationContext(), webView);
-                    mainLaserHandler.startHandler();
+                    Toast.makeText(MainActivity.this, "Error en inicialización de laser", Toast.LENGTH_SHORT).show();
+                    /*mainLaserHandler = new LaserHandler(getApplicationContext(), webView);
+                    mainLaserHandler.startHandler();*/
                 }
             }
         });
@@ -162,7 +158,8 @@ public class MainActivity extends AppCompatActivity {
                         utils.showKeyboard(MainActivity.this);
                     } else if (hr.getType() == 9 && eventDuration < 500) {
                         utils.hideKeyboard(MainActivity.this);
-                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
+                        if (!bluebird_btn.getText().toString().contains("ON"))
+                            webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
                     } else if (hr.getType() == 0) {
                         utils.toggleKey(MainActivity.this);
                     } else {
@@ -278,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
     } //Fin de startWebView()
 
     /**
-     * Metodo ejecutado con el resultado del {@link Activity#startActivityForResult}, segun su utilizacion
+     * Metodo ejecutado con el resultado de la camara {@link Activity#startActivityForResult}
      *
      * @param requestCode
      * @param resultCode
@@ -371,6 +368,21 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    @Override
+    public void onBackPressed() {
+
+        //Comprobamos si hay historial de navegacion
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            // Si no lo hay, damos el control al Back de la Activity
+            super.onBackPressed();
+        }
+    }
+
+    /**
+     * Handler para disparar los eventos del broadcast del laser
+     */
     public Handler laserHandler = new Handler() {
         public void handleMessage(Message m) {
             Log.d(TAG, "laserHandler");
@@ -386,8 +398,10 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "SLED conectado");
                         res = laserReader.SD_Connect();
                         bluebird_btn.setText("SLED ON");
-                        if (laserReader.SD_Connect() == SDConsts.SDResult.ACCESS_TIMEOUT)
+                        if (laserReader.SD_Connect() == SDConsts.SDResult.ACCESS_TIMEOUT) {
                             bluebird_btn.setText("RFR OFF");
+                            laserReader.SD_Disconnect();
+                        }
                         Log.d(TAG, "SD_Connect: " + res);
                     } else {
                         Log.d(TAG, "Fallo en SLED");
@@ -395,16 +409,21 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED:
-                    if(laserReader.SD_Connect() == -32)
+                    if (laserReader.SD_Connect() == -32) {
                         bluebird_btn.setText("RFR OFF");
+                        laserReader.SD_Disconnect();
+                    }else if (laserReader.SD_Connect() == -10 && m.arg2 == 0) {
+                        bluebird_btn.setText("RFR OFF");
+                        laserReader.SD_Disconnect();
+                    }
                     //bluebird_btn.setText("LASER ON");
                     Log.d(TAG, "lecturaLaser(): Laser on");
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED:
                     if (laserReader.SD_Connect() != -32) {
                         bluebird_btn.setText("SLED ON");
-                    }else{
-                        bluebird_btn.setText("RFR ON");
+                    } else {
+                        bluebird_btn.setText("SLED ON");
                     }
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_READ:
@@ -458,25 +477,11 @@ public class MainActivity extends AppCompatActivity {
                     bluebird_btn.setText("LOW BATTERY");
                     break;
                 default:
-                    bluebird_btn.setText("SLED ON");
+                    bluebird_btn.setText("BLUEBIRD ON");
                     break;
             }
         }
     };
 
-    /**
-     * Sobreescribimos el metodo de boton vuelta atras para que vaya a la anterior pagina visitada
-     */
-    @Override
-    public void onBackPressed() {
-
-        //Comprobamos si hay historial de navegacion
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            // Si no lo hay, damos el control al Back de la Activity
-            super.onBackPressed();
-        }
-    }
 
 }
