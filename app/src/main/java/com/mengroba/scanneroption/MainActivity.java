@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
     //DECLARACIONES
     private static final String TAG = "MainActivity";
+    private static final String TAG2 = "LaserLog";
     private static final String WEB_LOCAL =
             "file:///android_asset/main_menu.html";
     private static final int BARCODE_RESULTCODE = 100;
@@ -62,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private int arg1;
     private int arg2;
     private int res;
+    private boolean hasValue;
     //Elementos HTML
     public WebView webView;
     private WebAppInterface webInterface;
@@ -83,19 +85,20 @@ public class MainActivity extends AppCompatActivity {
         bluebird_btn = (Button) findViewById(R.id.btn_bluebird);
         bluebird_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Log.d(TAG, "bluebird_btn.arg1: " + arg1);
-                Log.d(TAG, "bluebird_btn.arg2: " + arg2);
-                if (laserReader != null && laserHandler != null) {
-                    if (bluebird_btn.getText().equals("SLED ON")) {
+                Log.d(TAG2, "bluebird_btn.arg1: " + arg1);
+                Log.d(TAG2, "bluebird_btn.arg2: " + arg2);
+                if (laserReader != null) {
+                    if (bluebird_btn.getText().equals("SLED ON") &&
+                            laserReader.SD_Connect() == -32) {
                         bluebird_btn.setText("SLED OFF");
                         //bluebird_btn.setTextColor(Color.RED);
                         res = laserReader.SD_Disconnect();
-                        Log.d(TAG, "bluebird_btn.SD_Disconnect: " + res);
+                        Log.d(TAG2, "bluebird_btn.SD_Disconnect: " + res);
                     } else {
                         bluebird_btn.setText("SLED ON");
                         //bluebird_btn.setTextColor(Color.GREEN);
                         res = laserReader.SD_Wakeup();
-                        Log.d(TAG, "bluebird_btn.SD_Wakeup: " + res);
+                        Log.d(TAG2, "bluebird_btn.SD_Wakeup: " + res);
                     }
                 } else {
                     Toast.makeText(MainActivity.this, "Error en inicialización de laser", Toast.LENGTH_SHORT).show();
@@ -385,70 +388,70 @@ public class MainActivity extends AppCompatActivity {
      */
     public Handler laserHandler = new Handler() {
         public void handleMessage(Message m) {
-            Log.d(TAG, "laserHandler");
-            Log.d(TAG, "arg1 = " + m.arg1 + ", arg2 = " + m.arg2 + ", what = " + m.what);
-            Log.d(TAG, "SDConnect(): " + laserReader.SD_Connect());
+            Log.d(TAG2, "laserHandler");
+            Log.d(TAG2, "arg1 = " + m.arg1 + ", arg2 = " + m.arg2 + ", what = " + m.what);
+            Log.d(TAG2, "SDConnectState(): " + laserReader.SD_GetConnectState());
             arg1 = m.arg1;
             arg2 = m.arg2;
 
             switch (m.arg1) {
                 //SLED Mensajes
                 case SDConsts.SDCmdMsg.SLED_WAKEUP:
-                    if (m.arg2 == SDConsts.SDResult.SUCCESS) {
-                        Log.d(TAG, "SLED conectado");
-                        res = laserReader.SD_Connect();
+                    if(laserReader.SD_GetConnectState() != -32) {
+                        laserReader.SD_Connect();
+                        Log.d(TAG2, "SLED conectado");
                         bluebird_btn.setText("SLED ON");
-                        if (laserReader.SD_Connect() == SDConsts.SDResult.ACCESS_TIMEOUT) {
-                            bluebird_btn.setText("RFR OFF");
-                            laserReader.SD_Disconnect();
-                        }
-                        Log.d(TAG, "SD_Connect: " + res);
-                    } else {
-                        Log.d(TAG, "Fallo en SLED");
-                        bluebird_btn.setText("ALREADY ON");
-                    }
-                    break;
-                case SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED:
-                    if (laserReader.SD_Connect() == -32) {
+                        break;
+                    }else{
+                        Log.d(TAG2, "SLED desconectado");
                         bluebird_btn.setText("RFR OFF");
                         laserReader.SD_Disconnect();
-                    }else if (laserReader.SD_Connect() == -10 && m.arg2 == 0) {
-                        bluebird_btn.setText("SLED OFF");
-                        laserReader.SD_Disconnect();
+                        break;
                     }
-                    //bluebird_btn.setText("LASER ON");
-                    Log.d(TAG, "lecturaLaser(): Laser on");
-                    break;
+                case SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED:
+                    if (laserReader.SD_GetConnectState() == -32) {
+                        bluebird_btn.setText("RFR OFF");
+                        /*laserReader.SD_Disconnect();*/
+                        break;
+                    }else {
+                        bluebird_btn.setText("LASER ACTIVE");
+                        Log.d(TAG2, "lecturaLaser(): Laser active");
+                        break;
+                    }
                 case SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED:
-                    if (laserReader.SD_Connect() != -32) {
+                    if (laserReader.SD_GetConnectState() == 1) {
                         bluebird_btn.setText("SLED ON");
-                    } else {
+                    }/* else if (laserReader.SD_GetConnectState() == 0 && hasValue) {
+                        hasValue = false;
+                        bluebird_btn.setText("SLED READY");
+                    } */else {
                         bluebird_btn.setText("SLED OFF");
                     }
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_READ:
                     if (m.arg2 == SDConsts.BCResult.SUCCESS) {
                         bluebird_btn.setText("SUCCES");
-                        Log.d(TAG, "lecturaLaser(): Laser leyendo");
+                        Log.d(TAG2, "lecturaLaser(): Laser leyendo");
                         //Toast.makeText(context, "LASER LEYENDO CODIGO", Toast.LENGTH_SHORT).show();
                     } else if (m.arg2 == SDConsts.BCResult.ACCESS_TIMEOUT) {
                         bluebird_btn.setText("TIMEOUT");
-                        Log.d(TAG, "lecturaLaser(): Laser expirado");
+                        Log.d(TAG2, "lecturaLaser(): Laser expirado");
                         //Toast.makeText(context, "TIEMPO DE ESPERA EXPIRADO", Toast.LENGTH_SHORT).show();
                     }
                     if (m.obj != null) {
                         StringBuilder readData = new StringBuilder();
                         bluebird_btn.setText("CODE OK");
-                        Log.d(TAG, "lecturaLaser(): valor no nulo");
+                        hasValue = true;
+                        Log.d(TAG2, "lecturaLaser(): valor no nulo");
                         String resultFull = readData.append((String) m.obj).toString();
                         String code = resultFull.substring(0, resultFull.indexOf(";"));
                         UtilsKeys.clearKeys(webView);
                         UtilsKeys.loadKeys(webView, code);
-                        Log.d(TAG, "lecturaLaser(): Resultado: " + code);
+                        Log.d(TAG2, "lecturaLaser(): Resultado: " + code);
                         //Pasamos la informacion al usuario, para ello usamos un dialogo emergente
                         //webInterface.showDialog("Codigo capturado: " + code);
                     } else {
-                        Log.d(TAG, "lecturaLaser() no hay codigo laser");
+                        Log.d(TAG2, "lecturaLaser() no hay codigo laser");
                         webInterface.showDialog("No se ha detectado ningún valor");
                     }
                     break;
@@ -459,21 +462,22 @@ public class MainActivity extends AppCompatActivity {
                         bluebird_btn.setText("BARCODE ON");
                     break;
                 case SDConsts.SDCmdMsg.TRIGGER_PRESSED:
-                    Log.d(TAG, "RFID capturando");
+                    Log.d(TAG2, "RFID capturando");
                     bluebird_btn.setText("RFID TRIGGER ON");
                     break;
                 case SDConsts.SDCmdMsg.TRIGGER_RELEASED:
-                    Log.d(TAG, "RFID capturando");
+                    Log.d(TAG2, "RFID capturando");
                     bluebird_btn.setText("SLED ON");
                     break;
                 case SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED:
-                    Log.d(TAG, "SLED desconectado");
+                    Log.d(TAG2, "SLED desconectado");
                     bluebird_btn.setText("SLED OFF");
                     break;
                 case SDConsts.SDCmdMsg.SLED_BATTERY_STATE_CHANGED:
                     bluebird_btn.setText("LASER ON");
                     break;
                 case SDConsts.SDBatteryState.LOW_BATTERY:
+                    Log.d(TAG2, "SLED Bateria baja");
                     bluebird_btn.setText("LOW BATTERY");
                     break;
                 default:
