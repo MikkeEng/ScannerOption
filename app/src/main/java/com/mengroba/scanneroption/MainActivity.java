@@ -413,7 +413,7 @@ public class MainActivity extends AppCompatActivity {
                         bluebird_btn.setText("RFR OFF");
                         laserReader.SD_Disconnect();
                     }else if (laserReader.SD_Connect() == -10 && m.arg2 == 0) {
-                        bluebird_btn.setText("RFR OFF");
+                        bluebird_btn.setText("SLED OFF");
                         laserReader.SD_Disconnect();
                     }
                     //bluebird_btn.setText("LASER ON");
@@ -423,7 +423,7 @@ public class MainActivity extends AppCompatActivity {
                     if (laserReader.SD_Connect() != -32) {
                         bluebird_btn.setText("SLED ON");
                     } else {
-                        bluebird_btn.setText("SLED ON");
+                        bluebird_btn.setText("SLED OFF");
                     }
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_READ:
