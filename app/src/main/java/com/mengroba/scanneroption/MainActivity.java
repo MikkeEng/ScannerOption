@@ -89,12 +89,18 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG2, "bluebird_btn.arg2: " + arg2);
                 if (laserReader != null) {
                     if (bluebird_btn.getText().equals("SLED ON") &&
-                            laserReader.SD_Connect() == -32) {
+                            laserReader.SD_GetConnectState() == -32) {
                         bluebird_btn.setText("SLED OFF");
                         //bluebird_btn.setTextColor(Color.RED);
-                        res = laserReader.SD_Disconnect();
-                        Log.d(TAG2, "bluebird_btn.SD_Disconnect: " + res);
-                    } else {
+                        laserReader.SD_Disconnect();
+                        Log.d(TAG2, "bluebird_btn.SD_Disconnect");
+                    } else if (bluebird_btn.getText().equals("SLED ON") &&
+                            laserReader.SD_GetConnectState() == 1) {
+                        bluebird_btn.setText("SLED OFF");
+                        //bluebird_btn.setTextColor(Color.RED);
+                        laserReader.SD_Disconnect();
+                        Log.d(TAG2, "bluebird_btn.SD_Disconnect");
+                    }else {
                         bluebird_btn.setText("SLED ON");
                         //bluebird_btn.setTextColor(Color.GREEN);
                         res = laserReader.SD_Wakeup();
@@ -421,10 +427,10 @@ public class MainActivity extends AppCompatActivity {
                 case SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED:
                     if (laserReader.SD_GetConnectState() == 1) {
                         bluebird_btn.setText("SLED ON");
-                    }/* else if (laserReader.SD_GetConnectState() == 0 && hasValue) {
-                        hasValue = false;
-                        bluebird_btn.setText("SLED READY");
-                    } */else {
+                    } else if (laserReader.SD_GetConnectState() == 0) {
+                        bluebird_btn.setText("SLED ON");
+                        laserReader.SD_Connect();
+                    } else {
                         bluebird_btn.setText("SLED OFF");
                     }
                     break;
