@@ -7,8 +7,8 @@ android {
         applicationId "com.mengroba.scanneroption"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 24
-        versionName "2.4"
+        versionCode 241
+        versionName "2.4.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -22,13 +22,15 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    compile 'com.android.support:appcompat-v7:25.1.1'
-    compile 'com.android.support:design:25.1.1'
     testCompile 'junit:junit:4.12'
-    compile 'com.google.android.gms:play-services-appindexing:8.4.0'
+    testCompile 'org.mockito:mockito-core:2.7.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
+    androidTestCompile 'com.android.support:support-annotations:25.2.0'
+    androidTestCompile 'com.android.support.test:runner:0.5'
+
+    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile 'com.android.support:design:25.2.0'
+    compile 'com.google.android.gms:play-services-appindexing:9.8.0'
     compile files('libs/bluebird-sled.jar')
     compile project(':zxing-portrait')
 }
