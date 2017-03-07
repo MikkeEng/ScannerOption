@@ -80,7 +80,7 @@ public enum UtilsKeys {
 
     public static void clearKeys(WebView webView) {
         webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME));
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < 50; i++) {
             webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_FORWARD_DEL));
         }
     }
