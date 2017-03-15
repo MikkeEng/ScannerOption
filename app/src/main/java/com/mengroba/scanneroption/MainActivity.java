@@ -27,8 +27,13 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.mengroba.scanneroption.utils.ReaderSkuTag;
 import com.mengroba.scanneroption.utils.UtilsKeys;
 import com.mengroba.scanneroption.utils.UtilsTools;
+import com.mengroba.scanneroption.utils.epc.BeaconEpc;
+import com.mengroba.scanneroption.utils.epc.Epc;
+import com.mengroba.scanneroption.utils.epc.GarmentEpc;
+import com.mengroba.scanneroption.utils.epc.TagInfo;
 
 import co.kr.bluebird.ser.protocol.Reader;
 import co.kr.bluebird.ser.protocol.SDConsts;
@@ -63,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     private int arg1;
     private int arg2;
     private int res;
+    private Epc epc;
+    private ReaderSkuTag readerSkuTag;
     //Elementos HTML
     public WebView webView;
     private WebAppInterface webInterface;
@@ -467,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
                     bluebird_btn.setText("RFID TRIGGER ON");
                     if(laserReader.SD_GetTriggerMode() == 0){
                         //checkState();
-                        laserReader.RF_READ(SDConsts.RFMemType.EPC, 1, 7, "00000000", false);
+                        laserReader.RF_READ(SDConsts.RFMemType.EPC, 2, 8, "00000000", false);
                     }
                     break;
                 case SDConsts.SDCmdMsg.TRIGGER_RELEASED:
@@ -478,17 +485,64 @@ public class MainActivity extends AppCompatActivity {
                     if (m.arg2 == SDConsts.RFResult.SUCCESS) {
                         bluebird_btn.setText("SUCCES");
                         Log.d(TAG2, "lecturaRFID(): RFID leyendo");
+
                         String data = (String)m.obj;
+                        if (data != null) {
+                            String[] epcData = data.split(";");
+                            String epc = epcData[0];
+                            //System.out.println("##@@-RECIBIDO-DATA--> " + data + " - epc-> " + epc);
+                            int rssi = 0;
+
+                            if (epc.length() != 32 && epc.length() != 36) {
+                                //System.out.println("##@@--EPC tamaño incorrecto--> " + epc);
+                                return;
+                            }
+
+                            if (epc.length() == 36) {
+                                epc = epc.substring(4);
+
+                                String rssiData = null;
+                                if (epcData.length > 1) {
+                                    rssiData = epcData[1].split(":")[1];
+                                }
+
+                                try {
+                                    rssi = Float.valueOf(rssiData).intValue();
+                                } catch (NumberFormatException e) {
+                                    //
+                                }
+                                //System.out.println("##@@--RECIBIDO-notificacion--> " + epc + " - rssi-> " + rssi);
+                            }
+
+                            TagInfo tagInfo = new TagInfo(epc, System.currentTimeMillis(), rssi);
+                            System.out.println("##@@--RECIBIDO---> " + tagInfo);
+                            readerSkuTag = new ReaderSkuTag(getBaseContext());
+                            data = readerSkuTag.tagReaded(tagInfo).toUpperCase();
+                            UtilsKeys.clearKeys(webView);
+                            UtilsKeys.loadKeys(webView, data);
+                            Log.d(TAG2, "lecturaRFID(): Resultado: " + data);
+                        }
+
+
+
+
+
+
+
+
+
+                        /*String data = (String)m.obj;
                         if (data != null) {
                             bluebird_btn.setText("RFID OK");
                             Log.d(TAG2, "lecturaRFID(): valor no nulo");
+                            epc = Epc.of(data);
                             UtilsKeys.clearKeys(webView);
-                            UtilsKeys.loadKeys(webView, data);
+                            UtilsKeys.loadKeys(webView, String.valueOf(epc.serial()));
                             Log.d(TAG2, "lecturaRFID(): Resultado: " + data);
                         } else {
                             Log.d(TAG2, "lecturaRFID() no hay codigo RFID");
                             webInterface.showDialog("No se ha detectado ningún valor");
-                        }
+                        }*/
                     }
                     break;
                 case SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED:
@@ -508,6 +562,21 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    public String epcToString() {
+        StringBuilder sb = new StringBuilder("TagInfo[");
+        sb.append("serial = ").append(this.epc.serial());
+        sb.append(", epc = ").append(this.epc);
+
+        if (this.epc instanceof GarmentEpc) {
+            sb.append(", garment = ").append(((GarmentEpc) this.epc).garmentCode());
+        } else {
+            sb.append(", beacon = ").append(((BeaconEpc) this.epc).info());
+        }
+        sb.append("]");
+
+        return sb.toString();
+    }
 
     /*public void checkState() {
         System.out.println("##@@--checkState-INI-> " + this.laserReader.RF_GetDutyCycle());

@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">ScannerOption</string>
+
+    <!-- Beacon info -->
+    <string name="beaconBlock">B</string>
+    <string name="beaconSide">S</string>
+    <string name="beaconNumber">N</string>
+    <string name="beaconExtreme">EXT</string>
+    <string name="beaconLimit">LIM</string>
 </resources>
