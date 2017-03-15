@@ -44,6 +44,7 @@ import static com.mengroba.scanneroption.WebAppInterface.JS_LOAD_PAGE;
 import static com.mengroba.scanneroption.WebAppInterface.JS_JAVASCRIPT;
 import static com.mengroba.scanneroption.WebAppInterface.JS_FUNCTION;
 import static com.mengroba.scanneroption.WebAppInterface.JS_START_SCAN_IF_EMPTY;
+import static com.mengroba.scanneroption.WebAppInterface.JS_TEXT_SPEECH;
 
 /**
  * Created by mengroba on 24/01/2017.
@@ -54,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
     //DECLARACIONES
     private static final String TAG = "MainActivity";
     private static final String TAG2 = "LaserLog";
-    private static final String WEB_LOCAL =
-            "file:///android_asset/main_menu.html";
+    private static final String WEB_LOCAL = "http://10.236.3.80:8080/wms-pme-hht/login.htm";
+            //"file:///android_asset/main_menu.html";
     private static final int BARCODE_RESULTCODE = 100;
 
     private UtilsTools utils;
@@ -179,24 +180,12 @@ public class MainActivity extends AppCompatActivity {
                             webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
                     } else if (hr.getType() == 0) {
                         utils.toggleKey(MainActivity.this);
+                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_TEXT_SPEECH);
                     } else {
 
                     }
                 }
                 return false;
-            }
-        });
-
-        webView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                Log.d(TAG, "onFocusChange(): " + v.getOnFocusChangeListener());
-
-                //el foco siempre se queda en el webview
-                if (hasFocus) {
-                    Toast.makeText(getApplicationContext(), "Has Focus", Toast.LENGTH_SHORT).show();
-                }
             }
         });
 
@@ -325,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
                 webInterface.makeToastAndroid("No se ha obtenido ningún dato");
                 //Opcion de habilitar el sonido
                 //beepTone(BEEP_ERROR);
-                //webInterface.textSpeech("No se ha obtenido ningun dato");
+                webInterface.textSpeech("No se ha obtenido ningun dato");
             }
         } else {
             webInterface.showDialog("No se detectó ningún valor");
@@ -470,6 +459,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case SDConsts.SDCmdMsg.TRIGGER_PRESSED:
+                    laserReader.RF_SetRadioPowerState(8);
                     Log.d(TAG2, "RFID capturando");
                     bluebird_btn.setText("RFID TRIGGER ON");
                     if(laserReader.SD_GetTriggerMode() == 0){
@@ -489,60 +479,22 @@ public class MainActivity extends AppCompatActivity {
                         String data = (String)m.obj;
                         if (data != null) {
                             String[] epcData = data.split(";");
-                            String epc = epcData[0];
-                            //System.out.println("##@@-RECIBIDO-DATA--> " + data + " - epc-> " + epc);
-                            int rssi = 0;
+                            String epcHex = epcData[0];
+                            Epc epc = Epc.of(epcHex);
 
-                            if (epc.length() != 32 && epc.length() != 36) {
-                                //System.out.println("##@@--EPC tamaño incorrecto--> " + epc);
+                            if (epc instanceof GarmentEpc) {
+                                data = ((GarmentEpc) epc).garmentCode().toString();
+                            } else {
+                                Toast.makeText(MainActivity.this, "EPC BEACON", Toast.LENGTH_SHORT).show();
+                                //Ignoramos
                                 return;
                             }
 
-                            if (epc.length() == 36) {
-                                epc = epc.substring(4);
-
-                                String rssiData = null;
-                                if (epcData.length > 1) {
-                                    rssiData = epcData[1].split(":")[1];
-                                }
-
-                                try {
-                                    rssi = Float.valueOf(rssiData).intValue();
-                                } catch (NumberFormatException e) {
-                                    //
-                                }
-                                //System.out.println("##@@--RECIBIDO-notificacion--> " + epc + " - rssi-> " + rssi);
-                            }
-
-                            TagInfo tagInfo = new TagInfo(epc, System.currentTimeMillis(), rssi);
-                            System.out.println("##@@--RECIBIDO---> " + tagInfo);
-                            readerSkuTag = new ReaderSkuTag(getBaseContext());
-                            data = readerSkuTag.tagReaded(tagInfo).toUpperCase();
                             UtilsKeys.clearKeys(webView);
                             UtilsKeys.loadKeys(webView, data);
+                            webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_TEXT_SPEECH);
                             Log.d(TAG2, "lecturaRFID(): Resultado: " + data);
                         }
-
-
-
-
-
-
-
-
-
-                        /*String data = (String)m.obj;
-                        if (data != null) {
-                            bluebird_btn.setText("RFID OK");
-                            Log.d(TAG2, "lecturaRFID(): valor no nulo");
-                            epc = Epc.of(data);
-                            UtilsKeys.clearKeys(webView);
-                            UtilsKeys.loadKeys(webView, String.valueOf(epc.serial()));
-                            Log.d(TAG2, "lecturaRFID(): Resultado: " + data);
-                        } else {
-                            Log.d(TAG2, "lecturaRFID() no hay codigo RFID");
-                            webInterface.showDialog("No se ha detectado ningún valor");
-                        }*/
                     }
                     break;
                 case SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED:

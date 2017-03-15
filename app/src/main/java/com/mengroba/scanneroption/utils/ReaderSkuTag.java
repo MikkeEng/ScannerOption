@@ -29,6 +29,7 @@ public class ReaderSkuTag {
         //this.tagInfo = tagInfo;
         Epc epc = tagInfo.getEpc();
 
+
         final String description = epc instanceof GarmentEpc ? ((GarmentEpc) epc).garmentCode().toString()
                 : getBeaconExtendedInfo(context, (BeaconEpc) epc);
 

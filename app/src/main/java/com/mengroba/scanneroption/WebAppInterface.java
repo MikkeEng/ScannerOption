@@ -27,13 +27,14 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     public static final String JS_JAVASCRIPT = "javascript:(";
     public static final String JS_FUNCTION = "function() {";
     public static final String JS_LOAD_PAGE =
-            "var listElementScanner = document.querySelectorAll('.scanner');" +
-            "var listElementLaser = document.querySelectorAll('.laser');" +
+                    "var listElementScanner = document.querySelectorAll('.scanner');" +
+                    "var listElementLaser = document.querySelectorAll('.laser');" +
                     "var actElement = document.activeElement;" +
                         "for(var i = 0; i < listElementScanner.length; i++) {" +
                             "var elementScanner = listElementScanner[i];" +
                             "elementScanner.autocomplete = 'off';" +
                             "elementScanner.placeholder = 'Pulsa y escanea';" +
+                            //"Android.textSpeech('Pulsa y escanea');" +
                         "}" +
                     "})()";
     public static final String JS_ELEMENT_SCANNER =
@@ -41,6 +42,15 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "var actElement = document.activeElement;" +
                     "for(var i = 0; i < listElementScanner.length; i++) {" +
                     "var elementScanner = listElementScanner[i];";
+    public static final String JS_TEXT_SPEECH =
+                     "var listElementVoice = document.querySelectorAll('.errorMessage');" +
+                        "for(var i = 0; i < listElementVoice.length; i++) {" +
+                            "var elementVoice = listElementVoice[i];" +
+                            "console.log('element voice: ' + elementVoice);" +
+                            "console.log('error: ' + elementVoice.innerHTML);" +
+                            "Android.textSpeech(elementVoice.innerHTML);" +
+                        "}" +
+                    "})()";
     public static final String JS_START_SCAN_IF_EMPTY =
             JS_ELEMENT_SCANNER +
                         "var elementValue = elementScanner.value;" +
