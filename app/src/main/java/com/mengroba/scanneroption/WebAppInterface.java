@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -46,10 +47,14 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                      "var listElementVoice = document.querySelectorAll('.errorMessage');" +
                         "for(var i = 0; i < listElementVoice.length; i++) {" +
                             "var elementVoice = listElementVoice[i];" +
-                            "console.log('element voice: ' + elementVoice);" +
+                            "console.log('element error: ' + elementVoice);" +
                             "console.log('error: ' + elementVoice.innerHTML);" +
                             "Android.textSpeech(elementVoice.innerHTML);" +
                         "}" +
+                        "var elementBarError = document.getElementById('bar.errors');" +
+                        "console.log('element voice: ' + elementBarError);" +
+                        "console.log('error: ' + elementBarError.innerHTML);" +
+                        "Android.textSpeech(elementBarError.innerHTML);" +
                     "})()";
     public static final String JS_START_SCAN_IF_EMPTY =
             JS_ELEMENT_SCANNER +
@@ -128,7 +133,10 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
      */
     @JavascriptInterface
     public void textSpeech(String msg) {
-        this.msg = msg;
+        Log.d(TAG, "tts.msg:" + msg);
+        String result = msg.replaceAll("(?=[0-9]+).", "$0 ").trim();
+        Log.d(TAG, "tts.msg:" + result);
+        this.msg = result;
         tts = new TextToSpeech(context, this);
     }
 
