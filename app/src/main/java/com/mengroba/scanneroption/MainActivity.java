@@ -4,9 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.hardware.Camera;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -20,6 +17,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -27,13 +26,10 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.mengroba.scanneroption.utils.ReaderSkuTag;
 import com.mengroba.scanneroption.utils.UtilsKeys;
 import com.mengroba.scanneroption.utils.UtilsTools;
-import com.mengroba.scanneroption.utils.epc.BeaconEpc;
 import com.mengroba.scanneroption.utils.epc.Epc;
 import com.mengroba.scanneroption.utils.epc.GarmentEpc;
-import com.mengroba.scanneroption.utils.epc.TagInfo;
 
 import co.kr.bluebird.ser.protocol.Reader;
 import co.kr.bluebird.ser.protocol.SDConsts;
@@ -55,13 +51,17 @@ public class MainActivity extends AppCompatActivity {
     //DECLARACIONES
     private static final String TAG = "MainActivity";
     private static final String TAG2 = "LaserLog";
-    private static final String WEB_LOCAL = "http://10.236.3.80:8080/wms-pme-hht/login.htm";
-            //"file:///android_asset/main_menu.html";
+    private static final String WEB_LOCAL = "";
+    private static final String WEB_SELECTION = "file:///android_asset/main_menu.html";
+    //Para pruebas utilizar: "file:///android_asset/main_menu.html";
     private static final int BARCODE_RESULTCODE = 100;
-
+    private static final int BEEP_OK = 1;
+    private static final int BEEP_ERROR = 2;
+    //UI
     private UtilsTools utils;
     private InputMethodManager imm;
     private Button bluebird_btn;
+    private Button keysoft_btn;
     //Scanner
     private String scanContentResult;
     private int errorScan;
@@ -70,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
     private int arg2;
     private int res;
     private Epc epc;
-    private ReaderSkuTag readerSkuTag;
     //Elementos HTML
     public WebView webView;
     private WebAppInterface webInterface;
@@ -97,12 +96,14 @@ public class MainActivity extends AppCompatActivity {
                 if (laserReader != null) {
                     if (bluebird_btn.getText().equals("SLED ON") &&
                             laserReader.SD_GetConnectState() == -32) {
-                        bluebird_btn.setText("SLED OFF");
+                        bluebird_btn.setText("RFR OFF");
+                        Log.d(TAG2, "Button -32: " + laserReader.SD_GetConnectState());
                         bluebird_btn.setTextColor(Color.RED);
                         laserReader.SD_Disconnect();
                         Log.d(TAG2, "bluebird_btn.SD_Disconnect");
-                    } else if (bluebird_btn.getText().equals("SLED ON") &&
-                            laserReader.SD_GetConnectState() == 1) {
+                    } else if (bluebird_btn.getText().equals("SLED ON") ||
+                            bluebird_btn.getText().equals("RFR ON") &&
+                                    laserReader.SD_GetConnectState() == 1) {
                         bluebird_btn.setText("SLED OFF");
                         bluebird_btn.setTextColor(Color.RED);
                         laserReader.SD_Disconnect();
@@ -120,6 +121,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        keysoft_btn = (Button) findViewById(R.id.btn_keysoft);
+        keysoft_btn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                utils.showKeyboard(MainActivity.this);
+            }
+        });
     }
 
     /**
@@ -127,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void createWebView(final Context context) {
 
-        //Enlazamos los elementos graficos
+        //Configuramos el webview
         webView = (WebView) findViewById(R.id.webView1);
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
         WebSettings settings = webView.getSettings();
@@ -136,22 +143,16 @@ public class MainActivity extends AppCompatActivity {
         //Accedemos a la configuracion del WebView y habilitamos el javascript
         settings.setJavaScriptEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
-        // Ajustamos el HTML al WebView
+        // Ajustamos el l WebView
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        //añadimos scroll
         webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         webView.setScrollbarFadingEnabled(false);
-        //habilitamos el uso de mediaplayer sin gestos
         settings.setMediaPlaybackRequiresUserGesture(false);
-        //habilitamos el tratamiento de ficheros
         settings.setAllowFileAccess(true);
-        //habilitamos las opciones de zoom
         settings.setBuiltInZoomControls(false);
         settings.setSupportZoom(false);
         settings.setTextZoom(125);
-        /*settings.setSupportZoom(true);
-        settings.setBuiltInZoomControls(true);*/
 
         webView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -160,9 +161,6 @@ public class MainActivity extends AppCompatActivity {
                 //Nos valemos del metodo HitTestResult de la clase WebView para reconocer el foco
                 // y si el elemento tiene la clase scanner, activamos el scanner por camara.
                 eventDuration = event.getEventTime() - event.getDownTime();
-                if (eventDuration > 500) {
-                    utils.showKeyboard(MainActivity.this);
-                }
 
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                     WebView.HitTestResult hr = ((WebView) view).getHitTestResult();
@@ -172,23 +170,17 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "HitTestResult: getExtra = " + hr.getExtra() + "\t\t Type=" + hr.getType());
                     Log.d(TAG, "onTouch()eventDuration = " + eventDuration);
 
-                    if (eventDuration > 500) {
-                        utils.showKeyboard(MainActivity.this);
-                    } else if (hr.getType() == 9 && eventDuration < 500) {
-                        utils.hideKeyboard(MainActivity.this);
+                    if (hr.getType() == 9 && eventDuration < 500) {
                         if (bluebird_btn.getText().toString().contains("OFF"))
                             webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_SCAN_IF_EMPTY);
-                    } else if (hr.getType() == 0) {
-                        utils.toggleKey(MainActivity.this);
-                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_TEXT_SPEECH);
-                    } else {
-
+                        //utils.showKeyboard(MainActivity.this);
+                    } else if(eventDuration > 500){
+                        webView.loadUrl(WEB_LOCAL);
                     }
                 }
                 return false;
             }
         });
-
         webView.loadUrl(WEB_LOCAL);
 
     } //Fin de createWebView()
@@ -199,25 +191,28 @@ public class MainActivity extends AppCompatActivity {
      */
     private void startWebView() {
 
-
         // Hacemos que todas las paginas se carguen en el mismo WebView
         webView.setWebViewClient(new WebViewClient() {
+
 
             @Override
             public void onPageFinished(WebView webView, String url) {
                 super.onPageFinished(webView, url);
+                //comprobamos las clases de los elementos HTML
+                webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_TEXT_SPEECH);
                 webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_LOAD_PAGE);
-                // Estado del teclado segun la pagina en la que estemos
+                // Mostramos el teclado en la pagina de seleccion
                 imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 Log.d(TAG, "onPageFinished(): " + webView.getTitle());
-
                 if (webView.getTitle().equals("Opciones")) {
                     imm.showSoftInput(webView, 0);
-                } else if (webView.getTitle().equals("Información de bloque") && errorScan != 1) {
-                    utils.hideKeyboard(MainActivity.this);
-                } else {
-                    //utils.hideKeyboard(MainActivity.this);
                 }
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                Toast.makeText(MainActivity.this, "Hay un problema con la red", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -226,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
          * seleccionar un archivo desde la aplicacion de camara o del almacenamiento.
          */
         webView.setWebChromeClient(new WebChromeClient() {
-
 
             @Override
             public void onPermissionRequest(PermissionRequest request) {
@@ -253,7 +247,6 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                 }
             }
-
 
             /**
              * Enviamos un mensaje por Javascript en caso de error en el WebChromeClient
@@ -314,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
                 webInterface.makeToastAndroid("No se ha obtenido ningún dato");
                 //Opcion de habilitar el sonido
                 //beepTone(BEEP_ERROR);
-                webInterface.textSpeech("No se ha obtenido ningun dato");
+                //webInterface.textSpeech("No se ha obtenido ningun dato");
             }
         } else {
             webInterface.showDialog("No se detectó ningún valor");
@@ -343,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         Log.d(TAG, " onStop");
         laserReader.SD_Disconnect();
-        Log.d(TAG, "onStop.SD_Disconnect: " + laserReader.SD_Disconnect());
+        Log.d(TAG2, "onStop.SD_Disconnect: " + laserReader.SD_Disconnect());
 
         super.onStop();
     }
@@ -365,11 +358,11 @@ public class MainActivity extends AppCompatActivity {
         boolean openResult = false;
         openResult = laserReader.RF_Open();
         if (openResult == SDConsts.RF_OPEN_SUCCESS) {
-            Log.i(TAG, "Reader opened");
+            Log.i(TAG2, "Reader opened");
             int ret = laserReader.SD_Wakeup();
-            Log.d(TAG, "WakeUp: " + ret);
+            Log.d(TAG2, "WakeUp: " + ret);
         } else if (openResult == SDConsts.RF_OPEN_FAIL)
-            Log.e(TAG, "Reader open failed");
+            Log.e(TAG2, "Reader open failed");
 
         super.onResume();
     }
@@ -377,9 +370,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        //Comprobamos si hay historial de navegacion
+        //por defecto muestra la pagina de seleccion
         if (webView.canGoBack()) {
-            webView.goBack();
+            //webView.goBack();
+            webView.loadUrl(WEB_SELECTION);
         } else {
             // Si no lo hay, damos el control al Back de la Activity
             super.onBackPressed();
@@ -387,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Handler para disparar los eventos del broadcast del laser
+     * Handler para disparar los eventos del broadcast de la pistola
      */
     public Handler laserHandler = new Handler() {
         public void handleMessage(Message m) {
@@ -396,73 +390,105 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG2, "SDConnectState(): " + laserReader.SD_GetConnectState());
             arg1 = m.arg1;
             arg2 = m.arg2;
+            //Se comprueba si esta conectado el RFR (pistola)
+            if(laserReader.SD_GetConnectState() != -32){
+                bluebird_btn.setText("RFR ON");
+                bluebird_btn.setTextColor(Color.GREEN);
+            }
 
             switch (m.arg1) {
                 //SLED Mensajes
                 case SDConsts.SDCmdMsg.SLED_WAKEUP:
-                    if(laserReader.SD_GetConnectState() != -32) {
+                    if (laserReader.SD_GetConnectState() != -32) {
                         laserReader.SD_Connect();
                         Log.d(TAG2, "SLED conectado");
                         bluebird_btn.setText("SLED ON");
+                        bluebird_btn.setTextColor(Color.GREEN);
                         break;
-                    }else{
+                    } else {
                         Log.d(TAG2, "SLED desconectado");
                         bluebird_btn.setText("RFR OFF");
+                        Log.d(TAG2, "WakeUp -32: " + laserReader.SD_GetConnectState());
+                        bluebird_btn.setTextColor(Color.RED);
                         laserReader.SD_Disconnect();
                         break;
                     }
                 case SDConsts.SDCmdMsg.SLED_MODE_CHANGED:
-                    if (m.arg2 == 0)
+                    if (m.arg2 == 0) {
                         bluebird_btn.setText("RFID ON");
-                    else if (m.arg2 == 1)
+                        bluebird_btn.setTextColor(Color.GREEN);
+                    } else if (m.arg2 == 1) {
                         bluebird_btn.setText("BARCODE ON");
+                        bluebird_btn.setTextColor(Color.GREEN);
+                    }
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_TRIGGER_PRESSED:
                     if (laserReader.SD_GetConnectState() == -32) {
                         bluebird_btn.setText("RFR OFF");
-                        break;
-                    }else {
-                        bluebird_btn.setText("LASER ACTIVE");
-                        Log.d(TAG2, "lecturaLaser(): Laser active");
-                        break;
-                    }
-                case SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED:
-                    if (laserReader.SD_GetConnectState() == 1) {
-                        bluebird_btn.setText("SLED ON");
-                    } else if (laserReader.SD_GetConnectState() == 0) {
-                        bluebird_btn.setText("SLED ON");
-                        laserReader.SD_Connect();
-                    } else {
+                        Log.d(TAG2, "triggerPress -32: " + laserReader.SD_GetConnectState());
+                        bluebird_btn.setTextColor(Color.RED);
+                    } else if(laserReader.SD_GetConnectState() == 0) {
                         bluebird_btn.setText("SLED OFF");
+                        bluebird_btn.setTextColor(Color.RED);
+                    } else {
+                        bluebird_btn.setText("LASER ACTIVE");
+                        bluebird_btn.setTextColor(Color.GREEN);
+                        Log.d(TAG2, "lecturaLaser(): Laser active");
+                    }
+                    break;
+                case SDConsts.BCCmdMsg.BARCODE_TRIGGER_RELEASED:
+                    switch (laserReader.SD_GetConnectState()) {
+                        case 0:
+                            bluebird_btn.setText("RFR ON");
+                            bluebird_btn.setTextColor(Color.GREEN);
+                            laserReader.SD_Connect();
+                            break;
+                        case 1:
+                            bluebird_btn.setText("SLED ON");
+                            bluebird_btn.setTextColor(Color.GREEN);
+                            break;
+                        case -32:
+                            Log.d(TAG2, "triggerRelease -32: " + laserReader.SD_GetConnectState());
+                            bluebird_btn.setText("SLED OFF");
+                            bluebird_btn.setTextColor(Color.GREEN);
+                            break;
+                        default:
+                            break;
                     }
                     break;
                 case SDConsts.BCCmdMsg.BARCODE_READ:
                     if (m.arg2 == SDConsts.BCResult.SUCCESS) {
                         bluebird_btn.setText("SUCCES");
+                        bluebird_btn.setTextColor(Color.GREEN);
                         Log.d(TAG2, "lecturaLaser(): Laser leyendo");
+                        if (m.obj != null) {
+                            StringBuilder readData = new StringBuilder();
+                            bluebird_btn.setText("CODE OK");
+                            bluebird_btn.setTextColor(Color.GREEN);
+                            Log.d(TAG2, "lecturaLaser(): valor no nulo");
+                            String resultFull = readData.append((String) m.obj).toString();
+                            String code = resultFull.substring(0, resultFull.indexOf(";"));
+                            UtilsKeys.clearKeys(webView);
+                            UtilsKeys.loadKeys(webView, code);
+                            Log.d(TAG2, "lecturaLaser(): Resultado: " + code);
+                        } else {
+                            Log.d(TAG2, "lecturaLaser() no hay codigo laser");
+                            webInterface.showDialog("No se ha detectado ningún valor");
+                        }
                     } else if (m.arg2 == SDConsts.BCResult.ACCESS_TIMEOUT) {
                         bluebird_btn.setText("TIMEOUT");
+                        bluebird_btn.setTextColor(Color.RED);
                         Log.d(TAG2, "lecturaLaser(): Laser expirado");
-                    }
-                    if (m.obj != null) {
-                        StringBuilder readData = new StringBuilder();
-                        bluebird_btn.setText("CODE OK");
-                        Log.d(TAG2, "lecturaLaser(): valor no nulo");
-                        String resultFull = readData.append((String) m.obj).toString();
-                        String code = resultFull.substring(0, resultFull.indexOf(";"));
-                        UtilsKeys.clearKeys(webView);
-                        UtilsKeys.loadKeys(webView, code);
-                        Log.d(TAG2, "lecturaLaser(): Resultado: " + code);
                     } else {
-                        Log.d(TAG2, "lecturaLaser() no hay codigo laser");
-                        webInterface.showDialog("No se ha detectado ningún valor");
+                        utils.beepTone(BEEP_ERROR);
                     }
                     break;
                 case SDConsts.SDCmdMsg.TRIGGER_PRESSED:
-                    laserReader.RF_SetRadioPowerState(8);
+                    laserReader.RF_SetRadioPowerState(10);
                     Log.d(TAG2, "RFID capturando");
                     bluebird_btn.setText("RFID TRIGGER ON");
-                    if(laserReader.SD_GetTriggerMode() == 0){
+                    bluebird_btn.setTextColor(Color.GREEN);
+                    if (laserReader.SD_GetTriggerMode() == 0) {
                         //checkState();
                         laserReader.RF_READ(SDConsts.RFMemType.EPC, 2, 8, "00000000", false);
                     }
@@ -470,17 +496,19 @@ public class MainActivity extends AppCompatActivity {
                 case SDConsts.SDCmdMsg.TRIGGER_RELEASED:
                     Log.d(TAG2, "RFID capturando");
                     bluebird_btn.setText("SLED ON");
+                    bluebird_btn.setTextColor(Color.GREEN);
                     break;
                 case SDConsts.RFCmdMsg.READ:
                     if (m.arg2 == SDConsts.RFResult.SUCCESS) {
-                        bluebird_btn.setText("SUCCES");
+                        bluebird_btn.setText("READ CODE");
+                        bluebird_btn.setTextColor(Color.GREEN);
                         Log.d(TAG2, "lecturaRFID(): RFID leyendo");
-
-                        String data = (String)m.obj;
+                        String data = (String) m.obj;
                         if (data != null) {
+                            utils.beepTone(BEEP_OK);
                             String[] epcData = data.split(";");
                             String epcHex = epcData[0];
-                            Epc epc = Epc.of(epcHex);
+                            epc = Epc.of(epcHex);
 
                             if (epc instanceof GarmentEpc) {
                                 data = ((GarmentEpc) epc).garmentCode().toString();
@@ -489,56 +517,41 @@ public class MainActivity extends AppCompatActivity {
                                 //Ignoramos
                                 return;
                             }
-
                             UtilsKeys.clearKeys(webView);
                             UtilsKeys.loadKeys(webView, data);
-                            webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_TEXT_SPEECH);
                             Log.d(TAG2, "lecturaRFID(): Resultado: " + data);
+                        } else {
+                            utils.beepTone(BEEP_ERROR);
                         }
+                    } else {
+                        utils.beepTone(BEEP_ERROR);
                     }
                     break;
                 case SDConsts.SDCmdMsg.SLED_UNKNOWN_DISCONNECTED:
                     Log.d(TAG2, "SLED desconectado");
                     bluebird_btn.setText("SLED OFF");
+                    bluebird_btn.setTextColor(Color.RED);
                     break;
                 case SDConsts.SDCmdMsg.SLED_BATTERY_STATE_CHANGED:
-                    bluebird_btn.setText("LASER ON");
+                    if (laserReader.SD_GetConnectState() != -32) {
+                        bluebird_btn.setText("RFR ON");
+                        bluebird_btn.setTextColor(Color.GREEN);
+                    } else {
+                        bluebird_btn.setText("RFR OFF");
+                        Log.d(TAG2, "batState -32: " + laserReader.SD_GetConnectState());
+                        bluebird_btn.setTextColor(Color.RED);
+                    }
                     break;
                 case SDConsts.SDBatteryState.LOW_BATTERY:
                     Log.d(TAG2, "SLED Bateria baja");
                     bluebird_btn.setText("LOW BATTERY");
+                    bluebird_btn.setTextColor(Color.RED);
                     break;
                 default:
                     bluebird_btn.setText("BLUEBIRD ON");
+                    bluebird_btn.setTextColor(Color.GREEN);
                     break;
             }
         }
     };
-
-    public String epcToString() {
-        StringBuilder sb = new StringBuilder("TagInfo[");
-        sb.append("serial = ").append(this.epc.serial());
-        sb.append(", epc = ").append(this.epc);
-
-        if (this.epc instanceof GarmentEpc) {
-            sb.append(", garment = ").append(((GarmentEpc) this.epc).garmentCode());
-        } else {
-            sb.append(", beacon = ").append(((BeaconEpc) this.epc).info());
-        }
-        sb.append("]");
-
-        return sb.toString();
-    }
-
-    /*public void checkState() {
-        System.out.println("##@@--checkState-INI-> " + this.laserReader.RF_GetDutyCycle());
-        while(this.laserReader.RF_GetDutyCycle() != 100) {
-            try {
-                Thread.sleep(70);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("##@@--checkState-FIN-> " + this.laserReader.RF_GetDutyCycle());
-    }*/
 }

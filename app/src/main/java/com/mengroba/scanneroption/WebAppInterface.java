@@ -61,13 +61,10 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
                     "})()";
 
     private static final String TAG = "WebAppInterface";
-    private static final int STATE_SCAN = 3;
-    private static final int STATE_CAMERA = 4;
 
     private Context context;
     private WebView webView;
     private ZxingOrient scanner;
-    private Intent intent;
     private TextToSpeech tts;
     private String msg;
     private Boolean ttsOk = true;
@@ -81,15 +78,9 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         this.webView = webView;
     }
 
-    @JavascriptInterface
-    public void openCameraFile() {
-        //Pasamos a MainActivity el estado correspondiente a captura de camara
-        intent = new Intent(context, MainActivity.class);
-        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("STATE", STATE_CAMERA);
-        context.startActivity(intent);
-    }
-
+    /**
+     * Accedemos al modulo de captura de codigo de barras
+     */
     @JavascriptInterface
     public void startScan() {
         //Creamos el scanner
@@ -128,23 +119,6 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     @JavascriptInterface
     public void makeToastAndroid(String msg) {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * Accedemos al modulo de captura de codigo de barras
-     */
-    @JavascriptInterface
-    public void scanBarcode() {
-        //Pasamos a MainActivity el estado correspondiente al escaner de barras
-        intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("STATE", STATE_SCAN);
-        context.startActivity(intent);
-    }
-
-    @JavascriptInterface
-    public void finishWindow() {
-        ((Activity) context).finish();
     }
 
     /**

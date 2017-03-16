@@ -181,7 +181,8 @@ public final class GarmentCode implements Serializable {
 
     @Override
     public String toString() {
-        return toString(PRETTY_PATTERN);
+        return toString(COMPACT_PATTERN);
+        //return toString(PRETTY_PATTERN);
     }
 
     public String barcode() {
