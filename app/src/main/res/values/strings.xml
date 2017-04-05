@@ -7,4 +7,5 @@
     <string name="beaconNumber">N</string>
     <string name="beaconExtreme">EXT</string>
     <string name="beaconLimit">LIM</string>
+
 </resources>

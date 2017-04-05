@@ -3,18 +3,16 @@ package com.mengroba.scanneroption;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ConsoleMessage;
@@ -39,10 +37,10 @@ import co.kr.bluebird.ser.protocol.SDConsts;
 import me.sudar.zxingorient.ZxingOrient;
 import me.sudar.zxingorient.ZxingOrientResult;
 
-import static com.mengroba.scanneroption.utils.JSConstants.JS_ADD_MANUAL_CLASS;
 import static com.mengroba.scanneroption.utils.JSConstants.JS_JAVASCRIPT_LISTENER;
 import static com.mengroba.scanneroption.utils.JSConstants.JS_JAVASCRIPT;
 import static com.mengroba.scanneroption.utils.JSConstants.JS_FUNCTION;
+import static com.mengroba.scanneroption.utils.JSConstants.JS_SCAN_CLASS;
 import static com.mengroba.scanneroption.utils.JSConstants.JS_START_CAMSCAN_IF_EMPTY;
 import static com.mengroba.scanneroption.utils.JSConstants.JS_TEXT_SPEECH;
 
@@ -97,9 +95,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-
-
-
         webInterface = new WebAppInterface(this);
         utils = new UtilsTools(this);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -144,15 +139,10 @@ public class MainActivity extends AppCompatActivity {
         keysoft_btn = (Button) findViewById(R.id.btn_keysoft);
         keysoft_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if(!keyIsActive){
-                    isKeyActive();
-                    //webView.setFocusableInTouchMode(true);
                     utils.showKeyboard(MainActivity.this);
-                }
             }
         });
     }
-
 
 
     /**
@@ -198,13 +188,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "onTouch()eventDuration: " + eventDuration);
 
                     if (hr.getType() == 9 && eventDuration < 500) {
-                        final Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                UtilsTools.hideKeyboard(MainActivity.this);
-                            }
-                        }, 20);
+                        webView.loadUrl(JS_JAVASCRIPT + JS_JAVASCRIPT_LISTENER);
+                        webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_SCAN_CLASS);
                         if (bluebird_btn.getText().toString().contains("OFF")) {
                             webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_CAMSCAN_IF_EMPTY);
                         }
@@ -233,13 +218,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView webView, String url) {
                 super.onPageFinished(webView, url);
-                webView.setFocusableInTouchMode(false);
                 //comprobamos las clases de los elementos HTML
                 webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_TEXT_SPEECH);
-                //webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_ONPAGE_LOAD);
-                webView.loadUrl(JS_JAVASCRIPT + JS_JAVASCRIPT_LISTENER);
-                // Mostramos el teclado en la pagina de seleccion
                 Log.d(TAG, "onPageFinished(): " + webView.getTitle());
+            }
+
+            @Override
+            public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+                super.onPageStarted(webView, url, favicon);
+                webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_SCAN_CLASS);
+                Log.d(TAG, "onPageStarted(): " + webView.getTitle());
             }
 
             @Override
@@ -411,25 +399,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public boolean isKeyActive(){
-        final View activityRootView = findViewById(R.id.activity_main);
-        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+    public void delayKeyboard() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
-            public void onGlobalLayout() {
-                Rect r = new Rect();
-                activityRootView.getWindowVisibleDisplayFrame(r);
-
-                int heightDiff = activityRootView.getRootView().getHeight() - (r.bottom - r.top);
-                if (heightDiff > 400) {
-                    keyIsActive = true;
-                    utils.hideKeyboard(MainActivity.this);
-                }else{
-                    webView.setFocusableInTouchMode(false);
-                    keyIsActive = false;
-                }
+            public void run() {
+                UtilsTools.hideKeyboard(MainActivity.this);
             }
-        });
-        return keyIsActive;
+        }, 50);
     }
 
     public void setModeScan(final String elementScanClass) {
@@ -441,13 +418,13 @@ public class MainActivity extends AppCompatActivity {
                     if (!bluebird_btn.getText().toString().contains("OFF")) {
                         switch (elementScanClass) {
                             case SCAN_MODE_EPC:
-                                webView.setFocusableInTouchMode(false);
+                                delayKeyboard();
                                 //laserReader.SD_SetTriggerMode(RFID_MODE);
                                 bluebird_btn.setText("RFID_EPC");
                                 bluebird_btn.setTextColor(Color.GREEN);
                                 break;
                             case SCAN_MODE_GARMENT:
-                                webView.setFocusableInTouchMode(false);
+                                delayKeyboard();
                                 //laserReader.SD_SetTriggerMode(RFID_MODE);
                                 UtilsKeys.clearKeys(webView);
                                 UtilsKeys.loadKeys(webView, "4654654654");
@@ -455,13 +432,12 @@ public class MainActivity extends AppCompatActivity {
                                 bluebird_btn.setTextColor(Color.GREEN);
                                 break;
                             case SCAN_MODE_MANUAL:
-                                //webView.setFocusableInTouchMode(true);
                                 utils.showKeyboard(MainActivity.this);
                                 bluebird_btn.setText("MANUAL");
                                 bluebird_btn.setTextColor(Color.GREEN);
                                 break;
                             default:
-                                webView.setFocusableInTouchMode(false);
+                                delayKeyboard();
                                 //laserReader.SD_SetTriggerMode(BARCODE_MODE);
                                 bluebird_btn.setText("BARCODE");
                                 bluebird_btn.setTextColor(Color.GREEN);
