@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -24,55 +23,18 @@ import me.sudar.zxingorient.ZxingOrient;
  */
 public class WebAppInterface implements TextToSpeech.OnInitListener {
 
-    //Codigo JS//
-    public static final String JS_JAVASCRIPT = "javascript:(";
-    public static final String JS_FUNCTION = "function() {";
-    public static final String JS_LOAD_PAGE =
-                    "var listElementScanner = document.querySelectorAll('.scanner');" +
-                    "var listElementLaser = document.querySelectorAll('.laser');" +
-                    "var actElement = document.activeElement;" +
-                        "for(var i = 0; i < listElementScanner.length; i++) {" +
-                            "var elementScanner = listElementScanner[i];" +
-                            "elementScanner.autocomplete = 'off';" +
-                            "elementScanner.placeholder = 'Pulsa y escanea';" +
-                            //"Android.textSpeech('Pulsa y escanea');" +
-                        "}" +
-                    "})()";
-    public static final String JS_ELEMENT_SCANNER =
-            "var listElementScanner = document.querySelectorAll('.scanner');" +
-                    "var actElement = document.activeElement;" +
-                    "for(var i = 0; i < listElementScanner.length; i++) {" +
-                    "var elementScanner = listElementScanner[i];";
-    public static final String JS_TEXT_SPEECH =
-                     "var listElementVoice = document.querySelectorAll('.errorMessage');" +
-                        "for(var i = 0; i < listElementVoice.length; i++) {" +
-                            "var elementVoice = listElementVoice[i];" +
-                            "console.log('element error: ' + elementVoice);" +
-                            "console.log('error: ' + elementVoice.innerHTML);" +
-                            "Android.textSpeech(elementVoice.innerHTML);" +
-                        "}" +
-                        "var elementBarError = document.getElementById('bar.errors');" +
-                        "console.log('element voice: ' + elementBarError);" +
-                        "console.log('error: ' + elementBarError.innerHTML);" +
-                        "Android.textSpeech(elementBarError.innerHTML);" +
-                    "})()";
-    public static final String JS_START_SCAN_IF_EMPTY =
-            JS_ELEMENT_SCANNER +
-                        "var elementValue = elementScanner.value;" +
-                            "if(elementScanner == actElement && !elementValue){" +
-                                "Android.startScan();" +
-                            "}" +
-                        "}" +
-                    "})()";
-
     private static final String TAG = "WebAppInterface";
+    private static final int RFID_MODE_EPC = 1;
+    private static final int RFID_MODE_GARMENT = 2;
 
     private Context context;
+    private MainActivity activity;
     private WebView webView;
     private ZxingOrient scanner;
     private TextToSpeech tts;
     private String msg;
     private Boolean ttsOk = true;
+    private String elementScanClass;
 
     public WebAppInterface(Context context) {
         this.context = context;
@@ -95,6 +57,16 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
         scanner.setInfo("Pulsa ATRÁS para cancelar");
         scanner.setInfoBoxColor("#1c1c1c");
         scanner.setBeep(true).initiateScan(Barcode.ONE_D_CODE_TYPES, -1);
+    }
+
+    /**
+     * Configuramos el modo de lectura
+     */
+    @JavascriptInterface
+    public void setScanMode(String elementScanClass) {
+        this.elementScanClass = elementScanClass;
+        this.activity = (MainActivity) context;
+        activity.setModeScan(elementScanClass);
     }
 
     /**
@@ -132,7 +104,10 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
      * @param msg
      */
     @JavascriptInterface
-    public void textSpeech(String msg) {
+    public void findMsg(String elementScanClass, String msg) {
+        if(elementScanClass.contains("error")){
+            msg = "Error, " + msg;
+        }
         Log.d(TAG, "tts.msg:" + msg);
         String result = msg.replaceAll("(?=[0-9]+).", "$0 ").trim();
         Log.d(TAG, "tts.msg:" + result);

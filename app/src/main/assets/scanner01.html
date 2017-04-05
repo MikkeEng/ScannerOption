@@ -21,10 +21,18 @@
         <form name="form1" method="get" action="">
 		
             <div data-role="fieldcontain">
-                <input class="scanner" type="text" name="name_keytext" id="id_keytext"
-                       value="" placeholder="Pulsa para escanear">
-                <input class="scanner" type="text" name="name_scantext" id="id_scantext"
-                       value="" placeholder="Pulsa para escanear">
+                <input class="scanEpc" type="text" id="id_scanEpc"
+                       value="" placeholder="scanEpc" autofocus>
+                <input class="scanGarmentRfid" type="text" id="id_scanGarment"
+                       value="" placeholder="scanGarment">
+                <input class="manual" type="text" id="id_manual"
+                       value="" placeholder="manual">
+                <input type="text" id="id_empty"
+                       value="" placeholder="camScan">
+                <p class="message" id="id_msg"
+                       >Mensaje de prueba<p/>
+                <!--<p class="message_error" id="id_msgError"
+                       >Mensaje de error de prueba<p/>-->
             </div>
 
             <div data-role="fieldcontain">

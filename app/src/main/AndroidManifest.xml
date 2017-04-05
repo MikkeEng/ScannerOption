@@ -19,13 +19,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:windowSoftInputMode="adjustResize">
+        android:theme="@style/AppTheme">
         <activity android:name=".MainActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:configChanges="orientation"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan">
             <intent-filter>
                 <action android:name="com.mengroba.scanneroption.laser.LASER_SCAN" />
 

@@ -11,6 +11,8 @@ import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 
+import com.mengroba.scanneroption.R;
+
 /**
  * Created by miguelef on 23/02/2017.
  */
@@ -52,22 +54,27 @@ public class UtilsTools {
         }
     }
 
-    public void toggleKey(final Activity activity){
+    public void toggleKey(final Activity activity) {
         imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        if (imm.isActive()){
+        if (imm.isActive()) {
             imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
         } else {
             imm.toggleSoftInput(0, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
         }
     }//end method
 
-    public void hideKeyboard(final Activity activity){
-        imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // ocultar
+    public static void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        View view = activity.getCurrentFocus();
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    public void showKeyboard(final Activity activity){
+    public void showKeyboard(final Activity activity) {
         imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(0, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
+        imm.toggleSoftInput(InputMethodManager.RESULT_SHOWN, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
     }
 }
+
