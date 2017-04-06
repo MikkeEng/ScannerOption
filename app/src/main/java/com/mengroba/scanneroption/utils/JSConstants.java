@@ -18,7 +18,7 @@ public class JSConstants {
             "}" +
             ",true))()";
     public static final String JS_TEXT_SPEECH =
-                "var listElementMsg = document.querySelectorAll('.message');" +
+                "var listElementMsg = document.querySelectorAll(\"p[class*='message']\");" +
                         "for(var i = 0; i < listElementMsg.length; i++) {" +
                             "var elementVoice = listElementMsg[i];" +
                             "if(elementVoice != null){" +
