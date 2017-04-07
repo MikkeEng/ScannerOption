@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 
+import com.mengroba.scanneroption.MainActivity;
 import com.mengroba.scanneroption.R;
 
 /**
@@ -75,6 +77,16 @@ public class UtilsTools {
     public void showKeyboard(final Activity activity) {
         imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.RESULT_SHOWN, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
+    }
+
+    public void delayKeyboard(final Activity activity) {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                UtilsTools.hideKeyboard(activity);
+            }
+        }, 30);
     }
 }
 

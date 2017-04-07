@@ -9,15 +9,24 @@ public class JSConstants {
     //Codigo JS//
     public static final String JS_JAVASCRIPT = "javascript:(";
     public static final String JS_FUNCTION = "function() {";
-    public static final String JS_JAVASCRIPT_LISTENER = "document.addEventListener('focus'," +
+    public static final String JS_LOAD_PAGE =
+            "console.log('JS_LOAD_PAGE');" +
+                    "var listElementScan = document.querySelectorAll(\"input[class*='scan']\");" +
+                    "for(var i = 0; i < listElementScan.length; i++) {" +
+                    "var elementScan = listElementScan[i];" +
+                    "elementScan.autocomplete = 'off';" +
+                    "}" +
+                    "})()";
+    public static final String JS_JAVASCRIPT_LISTENER =
+            "document.addEventListener('focus'," +
             "function(event){" +
             "var classElement = event.target.className;" +
-            "console.log('JS_JAVASCRIPT_LISTENER.clase  de element: ' + classElement);" +
-            "document.getElementById('id_text').innerHTML = classElement;" +
+            "console.log('JS_JAVASCRIPT_LISTENER.clase  de elemento: ' + classElement);" +
             "Android.setScanMode(classElement);" +
             "}" +
             ",true))()";
     public static final String JS_TEXT_SPEECH =
+            "console.log('JS_TEXT_SPEECH');" +
                 "var listElementMsg = document.querySelectorAll(\"p[class*='message']\");" +
                         "for(var i = 0; i < listElementMsg.length; i++) {" +
                             "var elementVoice = listElementMsg[i];" +
@@ -29,7 +38,7 @@ public class JSConstants {
                         "}" +
                     "})()";
     public static final String JS_START_CAMSCAN_IF_EMPTY =
-            "var listElementScanner = document.querySelectorAll('.scanCam');" +
+            "var listElementScanner = document.querySelectorAll('.scanBarcode');" +
                     "var actElement = document.activeElement;" +
                     "for(var i = 0; i < listElementScanner.length; i++) {" +
                     "var elementScanner = listElementScanner[i];" +
@@ -39,42 +48,43 @@ public class JSConstants {
                     "}" +
                     "}" +
                     "})()";
-    public static final String JS_SCANMODE =
-            "console.log('elementScanner scanBarcode: ' + elementScanner);" +
+    public static final String JS_SCAN_CLASS =
+            "console.log('JS_SCAN_CLASS');" +
+            "console.log('elementScanner: ' + elementScanner);" +
                     "if(elementScanner == actElement){" +
                     "elementScanClass = actElement.className;" +
-                    "console.log('clase de scanBarcode: ' + elementScanClass);" +
+                    "console.log('JS_SCAN_CLASS.clase de elemento: ' + elementScanClass);" +
                     "Android.setScanMode(elementScanClass);" +
                     "}";
-    public static final String JS_SCAN_CLASS =
+    public static final String JS_SCAN_MODE =
+            "console.log('JS_SCAN_MODE');" +
             "var elementScanClass = '';" +
                     "var elementScanner = '';" +
                     "var actElement = document.activeElement;" +
                     "console.log('elementScanner actElement: ' + actElement);" +
                     "var listElementScanBarcode = document.querySelectorAll('.scanBarcode');" +
-                    "console.log('scanBarcode' + listElementScanBarcode);" +
-                    "var listElementScanEpc = document.querySelectorAll('.scanEpc');" +
-                    "console.log('scanEpc' + listElementScanEpc);" +
-                    "var listElementScanGarment = document.querySelectorAll('.scanGarmentRfid');" +
-                    "console.log('scanGarmentRfid' + listElementScanGarment);" +
-                    "var listElementTextManual = document.querySelectorAll('.manual');" +
-                    "console.log('manual' + listElementTextManual);" +
-
+                    "console.log('scanBarcode: ' + listElementScanBarcode.length);" +
                     "for(var i = 0; i < listElementScanBarcode.length; i++) {" +
                     "elementScanner = listElementScanBarcode[i];" +
-                    JS_SCANMODE +
+                    JS_SCAN_CLASS +
                     "}" +
+                    "var listElementScanEpc = document.querySelectorAll('.scanEpc');" +
+                    "console.log('scanEpc: ' + listElementScanEpc.length);" +
                     "for(var i = 0; i < listElementScanEpc.length; i++) {" +
                     "elementScanner = listElementScanEpc[i];" +
-                    JS_SCANMODE +
+                    JS_SCAN_CLASS +
                     "}" +
+                    "var listElementScanGarment = document.querySelectorAll('.scanGarmentRfid');" +
+                    "console.log('scanGarmentRfid: ' + listElementScanGarment.length);" +
                     "for(var i = 0; i < listElementScanGarment.length; i++) {" +
                     "elementScanner = listElementScanGarment[i];" +
-                    JS_SCANMODE +
+                    JS_SCAN_CLASS +
                     "}" +
+                    "var listElementTextManual = document.querySelectorAll('.manual');" +
+                    "console.log('manual: ' + listElementTextManual.length);" +
                     "for(var i = 0; i < listElementTextManual.length; i++) {" +
                     "elementScanner = listElementTextManual[i];" +
-                    JS_SCANMODE +
+                    JS_SCAN_CLASS +
                     "}" +
                     "})()";
 }
