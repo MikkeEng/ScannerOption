@@ -1,20 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ScannerOption</string>
-
-    <!-- Beacon info -->
     <string name="beaconBlock">B</string>
-    <string name="beaconSide">S</string>
-    <string name="beaconNumber">N</string>
     <string name="beaconExtreme">EXT</string>
     <string name="beaconLimit">LIM</string>
-    <!-- Modes -->
+    <string name="beaconNumber">N</string>
+    <string name="beaconSide">S</string>
     <string name="rfid_epc">RFID_EPC</string>
-    <string name="no_value">No value detected</string>
-    <string name="error_init_scan">Init scan error</string>
+    <string name="no_value">No se detectó ningún valor</string>
+    <string name="error_init_scan">Error en inicialización de laser</string>
     <string name="barcode">BARCODE</string>
     <string name="rfid">RFID</string>
-    <string name="back_cancel">Press Back button to cancel</string>
-    <string name="ok">Ok</string>
+    <string name="back_cancel">Pulsa ATRÁS para cancelar</string>
+    <string name="ok">Aceptar</string>
     <string name="rfr_off">RFR OFF</string>
     <string name="sled_off">SLED OFF</string>
     <string name="sled_on">SLED ON</string>
@@ -23,16 +21,15 @@
     <string name="rfr_on">RFR ON</string>
     <string name="rfid_on">RFID ON</string>
     <string name="barcode_on">BARCODE ON</string>
-    <string name="laser_active">LASER ACTIVE</string>
-    <string name="success">SUCCESS</string>
-    <string name="code_ok">CODE OK</string>
-    <string name="timeout">TIMEOUT</string>
-    <string name="rfid_trigger_on">RFID TRIGGER ON</string>
-    <string name="reading_code">READING...</string>
+    <string name="laser_active">LASER ACTIVO</string>
+    <string name="success">REALIZADO</string>
+    <string name="code_ok">CODIGO OK</string>
+    <string name="timeout">TIEMPO EXPIRADO</string>
+    <string name="rfid_trigger_on">GATILLO RFID ON</string>
+    <string name="reading_code">LEYENDO...</string>
     <string name="epc_hex">EPC HEX</string>
     <string name="epc_garment">EPC GARMENT</string>
-    <string name="epc_beacon">EPC BEACON</string>
-    <string name="low_battery">LOW BATTERY</string>
+    <string name="epc_beacon">EPC BALIZA</string>
+    <string name="low_battery">BATERÍA BAJA</string>
     <string name="bluebird_on">BLUEBIRD ON</string>
-
 </resources>

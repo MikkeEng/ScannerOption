@@ -5,15 +5,8 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Handler;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.WebView;
-
-import com.mengroba.scanneroption.MainActivity;
-import com.mengroba.scanneroption.R;
 
 /**
  * Created by miguelef on 23/02/2017.
@@ -30,7 +23,7 @@ public class UtilsTools {
         this.context = context;
     }
 
-    public void beepTone(int status) {
+    public static void beepTone(int status) {
         ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
 
         try {
@@ -79,7 +72,7 @@ public class UtilsTools {
         imm.toggleSoftInput(InputMethodManager.RESULT_SHOWN, InputMethodManager.HIDE_IMPLICIT_ONLY); // mostrar
     }
 
-    public void delayKeyboard(final Activity activity) {
+    public static void delayKeyboard(final Activity activity) {
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
