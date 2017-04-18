@@ -32,4 +32,5 @@
     <string name="epc_beacon">EPC BALIZA</string>
     <string name="low_battery">BATERÍA BAJA</string>
     <string name="bluebird_on">BLUEBIRD ON</string>
+    <string name="connection_error">Hay un problema con la red</string>
 </resources>

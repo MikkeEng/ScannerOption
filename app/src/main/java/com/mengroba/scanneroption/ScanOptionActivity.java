@@ -60,13 +60,11 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.scan_option_layout);
 
-
+        webView = (WebView) findViewById(R.id.wbv_webView);
         webInterface = new WebAppInterface(this);
-        bluebirdMode = new BluebirdMode(this);
         utils = new UtilsTools(this);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        webView = (WebView) findViewById(R.id.wbv_webView);
         progressBar = (ProgressBar) findViewById(R.id.pgb_progressbar);
         main_btn = (Button) findViewById(R.id.btn_main);
         main_btn.setOnClickListener(new View.OnClickListener() {
@@ -130,13 +128,19 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
     @Override
     public void connect() {
         //BLUEBIRD
+        bluebirdMode = new BluebirdMode(this);
+        if(bluebirdMode.getReader() == null){
+            bluebirdMode.init();
+        }
         if (bluebirdMode.getReader().SD_GetConnectState() != 32) {
-            bluebirdMode.connect();
             device = BLUEBIRD;
         }
         //ZEBRA
-        /*else if(zebraMode.getReader().codigo_connect){
+        /*zebraMode = new ZebraMode(this);
+        if(zebraMode.getReader() == null){
             zebraMode.connect();
+        }
+        else if(zebraMode.getReader().codigo_zebraConnected){
             device = ZEBRA;
         }*/
         else {
@@ -227,6 +231,9 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
         // TODO Auto-generated method stub
         Log.d(TAG, " onStart");
         super.onStart();
+        if(device == null){
+            connect();
+        }
     }
 
     @Override
@@ -245,6 +252,7 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
 
     @Override
     protected void onStop() {
+        utils.hideKeyboard(this);
         super.onStop();
         Log.d(TAG, " onStop");
         //BLUEBIRD
@@ -256,6 +264,7 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
 
     @Override
     public void onDestroy() {
+        utils.hideKeyboard(this);
         // TODO Auto-generated method stub
         Log.d(TAG, " onDestroy");
         super.onDestroy();
@@ -263,15 +272,14 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
 
     @Override
     public void onResume() {
+        utils.hideKeyboard(this);
         // TODO Auto-generated method stub
         Log.d(TAG, "onResume");
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        //BLUEBIRD
-        bluebirdMode.connect();
-        //ZEBRA
-        //zebraMode.connect();
-
         super.onResume();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if(device == null){
+            connect();
+        }
     }
 
     @Override
@@ -303,5 +311,9 @@ public class ScanOptionActivity extends AppCompatActivity implements ScanOptionI
 
     public WebAppInterface getWebAppInterface() {
         return webInterface;
+    }
+
+    public ProgressBar getProgressBar(){
+        return progressBar;
     }
 }

@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.mengroba.scanneroption.R;
 import com.mengroba.scanneroption.ScanOptionActivity;
 import com.mengroba.scanneroption.bluebird.BluebirdMode;
 import com.mengroba.scanneroption.javascript.WebAppInterface;
@@ -42,12 +43,8 @@ public class ScanWebView {
     private static final String WEB_SERVER = "http://-------------/wms-pme-hht/login.htm";
     private static final String WEB_SELECTION = "http://localhost:8080/wms-pme-hht/userActions.htm";
 
-    private Context context;
-    private BluebirdMode bluebirdMode;
     private ScanOptionActivity activity;
     private WebView webView;
-    private Button bluebird_btn;
-    private WebAppInterface webInterface;
     private ProgressBar progressBar;
     private long eventDuration;
 
@@ -60,12 +57,11 @@ public class ScanWebView {
      * Creamos el visor WebView para cargar el HTML
      */
     public void createWebView() {
-        this.bluebird_btn = activity.getMain_btn();
 
         //Configuramos el webview
         WebSettings settings = webView.getSettings();
         //Enlazamos WebAppInterface entre el codigo JavaScript y el codigo Android
-        webView.addJavascriptInterface(new WebAppInterface(context, webView), "Android");
+        webView.addJavascriptInterface(new WebAppInterface(activity, webView), "Android");
         //Accedemos a la configuracion del WebView y habilitamos el javascript
         settings.setJavaScriptEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
@@ -94,7 +90,7 @@ public class ScanWebView {
 
                     if (hr.getType() == 9 && eventDuration < 500) {
                         webView.loadUrl(JS_JAVASCRIPT + JS_JAVASCRIPT_LISTENER);
-                        if (bluebird_btn.getText().toString().contains("OFF")) {
+                        if (activity.getTextMainButton().contains("OFF")) {
                             webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_CAMSCAN_IF_EMPTY);
                         }
                     } else if (eventDuration > 500) {
@@ -139,7 +135,7 @@ public class ScanWebView {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                Toast.makeText(activity, "Hay un problema con la red", Toast.LENGTH_LONG).show();
+                Toast.makeText(activity, R.string.connection_error, Toast.LENGTH_LONG).show();
             }
         });
 
@@ -164,6 +160,7 @@ public class ScanWebView {
              */
             @Override
             public void onProgressChanged(WebView view, int progress) {
+                progressBar = activity.getProgressBar();
                 progressBar.setProgress(0);
                 progressBar.setVisibility(View.VISIBLE);
                 activity.setProgress(progress * 1000);

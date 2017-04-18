@@ -32,7 +32,7 @@ public class BluebirdMode {
     private static final int BEEP_ERROR = 2;
     private static final String SCAN_MODE_EPC = "scanEpc";
     private static final String SCAN_MODE_GARMENT = "scanGarmentRfid";
-    private static final String SCAN_MODE_BARCODE = "setBarcodeMode";
+    private static final String SCAN_MODE_BARCODE = "scanBarcode";
     private static final String SCAN_MODE_MANUAL = "manual";
     public static final int RFR_OFF = 0;
     public static final int RFR_ON = 1;
@@ -65,11 +65,11 @@ public class BluebirdMode {
         this.webView = activity.getWebView();
         this.webInterface = activity.getWebAppInterface();
         try {
-            this.reader = Reader.getReader(context, connectivityReaderHandler);
-            ;
+            this.reader = Reader.getReader(activity, connectivityReaderHandler);
 
             boolean openResult = this.reader.RF_Open();
             if (openResult == SDConsts.RF_OPEN_SUCCESS) {
+                Log.i(TAG, "Reader opened");
             }
 
             this.reader.SD_SetTriggerMode(SDConsts.SDTriggerMode.RFID);
@@ -77,6 +77,7 @@ public class BluebirdMode {
             int ret = this.reader.SD_Wakeup();
 
             if (ret == SDConsts.SDResult.SUCCESS) {
+                Log.i(TAG, "Reader ok");
             }
         } catch (Exception e) {
             Log.e(TAG, "init().Error: " + e.getMessage());
@@ -85,17 +86,6 @@ public class BluebirdMode {
             Log.e(TAG, "init().Throw: " + t.getMessage());
             t.printStackTrace();
         }
-    }
-
-    public void connect() {
-        reader = Reader.getReader(activity, connectivityReaderHandler);
-        boolean openResult = reader.RF_Open();
-        if (openResult == SDConsts.RF_OPEN_SUCCESS) {
-            Log.i(TAG, "Reader opened");
-            int ret = reader.SD_Wakeup();
-            Log.d(TAG, "WakeUp: " + ret);
-        } else if (openResult == SDConsts.RF_OPEN_FAIL)
-            Log.e(TAG, "Reader open failed");
     }
 
     public void disconnect() {
@@ -138,6 +128,7 @@ public class BluebirdMode {
 
 
     public void setModeScan(final String elementScanClass) {
+        utils = new UtilsTools(activity);
         if (elementScanClass != null) {
             this.elementScanClass = elementScanClass;
             activity.runOnUiThread(new Runnable() {
@@ -162,6 +153,7 @@ public class BluebirdMode {
                             getReader().SD_SetTriggerMode(BARCODE_MODE);
                             activity.setMainButton(activity.getString(R.string.barcode), Color.GREEN);
                         } else if (elementScanClass.contains(SCAN_MODE_MANUAL)) {
+                            utils.delayKeyboard(activity);
                             utils.showKeyboard(activity);
                             getReader().SD_SetTriggerMode(BARCODE_MODE);
                             activity.setMainButton(activity.getString(R.string.manual), Color.GREEN);

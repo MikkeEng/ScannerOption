@@ -34,5 +34,6 @@
     <string name="epc_beacon">EPC BEACON</string>
     <string name="low_battery">LOW BATTERY</string>
     <string name="bluebird_on">BLUEBIRD ON</string>
+    <string name="connection_error">Error connection</string>
 
 </resources>

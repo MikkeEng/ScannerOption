@@ -21,25 +21,23 @@
         <form name="form1" method="get" action="">
 		
             <div data-role="fieldcontain">
+                <input class="manual" type="number" id="id_manual"
+                       value="" placeholder="manual" autofocus>
                 <input class="scanEpc" type="text" id="id_scanEpc"
-                       value="" placeholder="scanEpc" autofocus>
+                       value="" placeholder="scanEpc">
                 <input class="scanGarmentRfid" type="text" id="id_scanGarment"
                        value="" placeholder="scanGarment">
-                <input class="manual" type="number" id="id_manual"
-                       value="" placeholder="manual">
                 <input class="scanBarcode" type="text" id="id_empty"
                        value="" placeholder="scanBarcode">
                 <p class="message" id="id_msg"
                        >Mensaje de info<p/>
                 <p class="message_error" id="id_msg_error"
                        >Mensaje de prueba<p/>
-                <!--<p class="message_error" id="id_msgError"
-                       >Mensaje de error de prueba<p/>-->
             </div>
 
-            <div data-role="fieldcontain">
-                <label id="id_text">Vete a la posicion AA y escanea o escribe el valor</label>
-            </div>
+            <!--<div data-role="fieldcontain">
+                <label class="message" id="id_text">Vete a la posicion AA y escanea o escribe el valor</label>
+            </div>-->
         </form>
     </div>
 </div>
