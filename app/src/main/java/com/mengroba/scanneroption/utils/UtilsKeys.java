@@ -85,7 +85,7 @@ public enum UtilsKeys {
         }
     }
 
-    public static void enterKeys(WebView webView) {
+    public static void introKey(WebView webView) {
         webView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
     }
 }

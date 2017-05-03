@@ -12,8 +12,6 @@ import android.widget.Toast;
 
 import com.mengroba.scanneroption.R;
 import com.mengroba.scanneroption.ScanOptionActivity;
-import com.mengroba.scanneroption.bluebird.BluebirdMode;
-
 import me.sudar.zxingorient.Barcode;
 import me.sudar.zxingorient.ZxingOrient;
 
@@ -31,13 +29,10 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     private static final String TAG = "WebAppInterface";
 
     private Context context;
-    private ScanOptionActivity activity;
     private WebView webView;
-    private ZxingOrient scanner;
     private TextToSpeech tts;
     private String msg;
     private Boolean ttsOk = true;
-    private String elementScanClass;
 
     public WebAppInterface(Context context) {
         this.context = context;
@@ -54,7 +49,7 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
     @JavascriptInterface
     public void startScan() {
         //Creamos el scanner
-        scanner = new ZxingOrient((Activity) context);
+        ZxingOrient scanner = new ZxingOrient((Activity) context);
         scanner.setToolbarColor("#1c1c1c");
         scanner.setIcon(R.drawable.ic_barcode_scan);
         scanner.setInfo(context.getString(R.string.back_cancel));
@@ -67,8 +62,8 @@ public class WebAppInterface implements TextToSpeech.OnInitListener {
      */
     @JavascriptInterface
     public void setScanMode(String elementScanClass) {
-        this.activity = (ScanOptionActivity) context;
-        this.elementScanClass = elementScanClass;
+        ScanOptionActivity activity = (ScanOptionActivity) context;
+        String elementScanClass1 = elementScanClass;
         activity.setModeScan(elementScanClass);
     }
 

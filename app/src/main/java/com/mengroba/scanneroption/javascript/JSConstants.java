@@ -38,11 +38,14 @@ public class JSConstants {
                     "}" +
                     "})()";
     public static final String JS_START_CAMSCAN_IF_EMPTY =
-            "var listElementScanner = document.querySelectorAll('.setBarcodeMode');" +
+            "var listElementScanner = document.querySelectorAll('.scanBarcode');" +
                     "var actElement = document.activeElement;" +
+                    "console.log('JS_START_CAMSCAN_IF_EMPTY.actElement: ' + actElement);" +
                     "for(var i = 0; i < listElementScanner.length; i++) {" +
                     "var elementScanner = listElementScanner[i];" +
+                    "console.log('JS_START_CAMSCAN_IF_EMPTY.elementScanner: ' + elementScanner);" +
                     "var elementValue = elementScanner.value;" +
+                    "console.log('JS_START_CAMSCAN_IF_EMPTY.elementValue: ' + elementValue);" +
                     "if(elementScanner == actElement && !elementValue){" +
                     "Android.startScan();" +
                     "}" +
@@ -62,7 +65,7 @@ public class JSConstants {
                     "var elementScanner = '';" +
                     "var actElement = document.activeElement;" +
                     "console.log('elementScanner actElement: ' + actElement);" +
-                    "var listElementScanBarcode = document.querySelectorAll('.setBarcodeMode');" +
+                    "var listElementScanBarcode = document.querySelectorAll('.scanBarcode');" +
                     "console.log('setBarcodeMode: ' + listElementScanBarcode.length);" +
                     "for(var i = 0; i < listElementScanBarcode.length; i++) {" +
                     "elementScanner = listElementScanBarcode[i];" +

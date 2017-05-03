@@ -1,5 +1,6 @@
 package com.mengroba.scanneroption.webview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -22,6 +23,7 @@ import com.mengroba.scanneroption.R;
 import com.mengroba.scanneroption.ScanOptionActivity;
 import com.mengroba.scanneroption.bluebird.BluebirdMode;
 import com.mengroba.scanneroption.javascript.WebAppInterface;
+import com.mengroba.scanneroption.utils.UtilsTools;
 
 import static com.mengroba.scanneroption.javascript.JSConstants.JS_FUNCTION;
 import static com.mengroba.scanneroption.javascript.JSConstants.JS_JAVASCRIPT;
@@ -90,12 +92,9 @@ public class ScanWebView {
 
                     if (hr.getType() == 9 && eventDuration < 500) {
                         webView.loadUrl(JS_JAVASCRIPT + JS_JAVASCRIPT_LISTENER);
-                        if (activity.getTextMainButton().contains("OFF")) {
-                            webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_CAMSCAN_IF_EMPTY);
-                        }
                     } else if (eventDuration > 500) {
                         //Reecargamos la pagina
-                        webView.loadUrl(WEB_TEST);
+                        webView.reload();
                     }
                 }
                 return false;

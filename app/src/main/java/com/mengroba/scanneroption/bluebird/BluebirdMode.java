@@ -20,6 +20,10 @@ import com.mengroba.scanneroption.epc.GarmentEpc;
 import co.kr.bluebird.ser.protocol.Reader;
 import co.kr.bluebird.ser.protocol.SDConsts;
 
+import static com.mengroba.scanneroption.javascript.JSConstants.JS_FUNCTION;
+import static com.mengroba.scanneroption.javascript.JSConstants.JS_JAVASCRIPT;
+import static com.mengroba.scanneroption.javascript.JSConstants.JS_START_CAMSCAN_IF_EMPTY;
+
 /**
  * Created by miguelef on 12/04/2017.
  */
@@ -44,13 +48,13 @@ public class BluebirdMode {
     private WebView webView;
     private WebAppInterface webInterface;
     private String elementScanClass;
-    private Button main_btn;
     private UtilsTools utils;
     private Reader reader;
     private int arg1;
     private int arg2;
     private int res;
     private Epc epc;
+    private static boolean RFRState;
 
     public BluebirdMode(ScanOptionActivity activity) {
         this.activity = activity;
@@ -108,16 +112,19 @@ public class BluebirdMode {
                     reader.SD_GetConnectState() == -32) {
                 activity.setMainButton(activity.getString(R.string.rfr_off), Color.RED);
                 reader.SD_Disconnect();
+                RFRState = false;
                 Log.d(TAG, "Button -32: " + reader.SD_GetConnectState());
             } else if (activity.getTextMainButton().equals(activity.getString(R.string.sled_on)) ||
                     activity.getTextMainButton().equals(activity.getString(R.string.rfr_on)) &&
                             reader.SD_GetConnectState() == 1) {
                 activity.setMainButton(activity.getString(R.string.sled_off), Color.RED);
                 reader.SD_Disconnect();
+                RFRState = false;
                 Log.d(TAG, "readerMode.SD_Disconnect");
             } else {
                 activity.setMainButton(activity.getString(R.string.sled_on), Color.GREEN);
                 res = reader.SD_Wakeup();
+                RFRState = true;
                 Log.d(TAG, "readerMode.SD_Wakeup: " + res);
             }
         } else {
@@ -135,7 +142,6 @@ public class BluebirdMode {
                 @Override
                 public void run() {
                     if (getReader().SD_GetConnectState() == 1) {
-
                         if (elementScanClass.contains(SCAN_MODE_EPC)) {
                             utils.delayKeyboard(activity);
                             getReader().SD_SetTriggerMode(RFID_MODE);
@@ -165,7 +171,18 @@ public class BluebirdMode {
                         if (elementScanClass.contains(SCAN_MODE_BARCODE)) {
                             utils.delayKeyboard(activity);
                             getReader().SD_SetTriggerMode(BARCODE_MODE);
+                            webView.loadUrl(JS_JAVASCRIPT + JS_FUNCTION + JS_START_CAMSCAN_IF_EMPTY);
                             activity.setMainButton(activity.getString(R.string.barcode), Color.GREEN);
+                        }else if (elementScanClass.contains(SCAN_MODE_EPC)) {
+                            utils.delayKeyboard(activity);
+                            getReader().SD_SetTriggerMode(BARCODE_MODE);
+                            activity.setMainButton(activity.getString(R.string.rfid_epc), Color.GREEN);
+                            /*UtilsKeys.clearKeys(webView);
+                            UtilsKeys.loadKeys(webView, "CEXP1064");*/
+                        } else if (elementScanClass.contains(SCAN_MODE_GARMENT)) {
+                            utils.delayKeyboard(activity);
+                            getReader().SD_SetTriggerMode(BARCODE_MODE);
+                            activity.setMainButton(activity.getString(R.string.rfid_garment), Color.GREEN);
                         } else if (elementScanClass.contains(SCAN_MODE_MANUAL)) {
                             utils.showKeyboard(activity);
                             activity.setMainButton(activity.getString(R.string.manual), Color.GREEN);
@@ -251,8 +268,12 @@ public class BluebirdMode {
                             Log.d(TAG, "lecturaLaser(): valor no nulo");
                             String resultFull = readData.append((String) m.obj).toString();
                             String code = resultFull.substring(0, resultFull.indexOf(";"));
-                            UtilsKeys.clearKeys(webView);
-                            UtilsKeys.loadKeys(webView, code);
+                            if(!isRFRState()){
+                                UtilsKeys.clearKeys(webView);
+                            }else {
+                                UtilsKeys.clearKeys(webView);
+                                UtilsKeys.loadKeys(webView, code);
+                            }
                             Log.d(TAG, "lecturaLaser(): Resultado: " + code);
                         } else {
                             Log.d(TAG, "lecturaLaser() no hay codigo laser");
@@ -266,7 +287,7 @@ public class BluebirdMode {
                     }
                     break;
                 case SDConsts.SDCmdMsg.TRIGGER_PRESSED:
-                    reader.RF_SetRadioPowerState(10);
+                    reader.RF_SetRadioPowerState(20);
                     Log.d(TAG, "RFID capturando");
                     activity.setMainButton(activity.getString(R.string.rfid_trigger_on), Color.GREEN);
                     if (reader.SD_GetTriggerMode() == 0) {
@@ -398,4 +419,7 @@ public class BluebirdMode {
         return epc;
     }
 
+    public static boolean isRFRState() {
+        return RFRState;
+    }
 }
